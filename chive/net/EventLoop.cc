@@ -1,17 +1,31 @@
+#include <sys/poll.h>
+#include <iostream>
+#include <cassert>
+#include <sys/eventfd.h>
+#include <unistd.h>
+
 #include "chive/net/EventLoop.h"
 #include "chive/net/Channel.h"
 #include "chive/net/poller.h"
 
 
-#include <sys/poll.h>
-#include <iostream>
-#include <cassert>
 
 using namespace chive;
 using namespace chive::net;
 
+///
+/// thread local variavle, to limit each thread having no more than one
+/// EventLoop instance
+///
+__thread EventLoop* t_loopInThisThread = nullptr;
 const int kPollTimeMs = 10000;
 
+int createEventfd() {
+    int evtfd = ::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
+    IF(evtfd < 0) {
+        
+    }
+}
 EventLoop::EventLoop():
     looping_(false),
     quit_(false),

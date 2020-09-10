@@ -18,20 +18,22 @@ class Poller;
 class EventLoop : chive::noncopyable
 {
 public:
+    using Functor = std::function<void()>;
     EventLoop();
     ~EventLoop();
 
+    // must be called by the thread creates the object
     void loop();
-    /*
+
     inline void assertInLoopThread() {
         if(!isInLoopThread()) {
             abortNotInLoopThread();
         }        
     }
     inline bool isInLoopThread() {
-        return true;
+        return threadId_ == std::this_thread::getid();
     }
-    */
+
    void updateChannel(Channel* channel);
    void quit();
 private:

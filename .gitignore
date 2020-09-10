@@ -30,3 +30,13 @@
 *.exe
 *.out
 *.app
+
+# vscode conf
+.vscode/
+
+# blade build
+blade-bin/
+build64_release/
+
+# core dump
+core.*
