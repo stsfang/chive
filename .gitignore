@@ -30,3 +30,10 @@
 *.exe
 *.out
 *.app
+
+# blade build
+blade-bin/
+build64_release/
+
+#vs code
+.vscode/

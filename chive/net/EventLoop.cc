@@ -1,6 +1,6 @@
 #include "chive/net/EventLoop.h"
-#include "chive/net/Channel.h"
-#include "chive/net/poller.h"
+// #include "chive/net/Channel.h"
+// #include "chive/net/poller.h"
 
 
 #include <sys/poll.h>
@@ -15,9 +15,11 @@ const int kPollTimeMs = 10000;
 EventLoop::EventLoop():
     looping_(false),
     quit_(false),
+    threadId_(std::this_thread::get_id()),
+    callingPendingFunctors_(false),
     poller_(new Poller(this))
 {
-
+    
 }
 
 EventLoop::~EventLoop()
