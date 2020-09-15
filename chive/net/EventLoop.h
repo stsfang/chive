@@ -1,6 +1,14 @@
 #ifndef CHIVE_NET_EVENTLOOP_H
 #define CHIVE_NET_EVENTLOOP_H
 #include "chive/base/noncopyable.h"
+#include "chive/net/TimerId.h"
+#include "chive/net/Timer.h"
+#include "chive/net/Channel.h"
+#include "chive/net/TimerQueue.h"
+#include "chive/net/poller.h"
+#include "chive/base/CurrentThread.h"
+
+
 #include <vector>
 #include <memory>
 #include <atomic>
@@ -8,11 +16,7 @@
 #include <mutex>
 #include <thread>
 
-#include "chive/net/TimerId.h"
-#include "chive/net/Timer.h"
-#include "chive/net/Channel.h"
-#include "chive/net/TimerQueue.h"
-#include "chive/net/poller.h"
+
 
 namespace chive
 {
@@ -35,16 +39,17 @@ public:
     ~EventLoop();
 
     void loop();
-    /*
+    
     inline void assertInLoopThread() {
         if(!isInLoopThread()) {
             abortNotInLoopThread();
         }        
     }
+
     inline bool isInLoopThread() {
-        return true;
+        return threadId == CurrentThread::tid();
     }
-    */
+    
    void updateChannel(Channel* channel);
    void quit();
 
@@ -67,6 +72,8 @@ public:
     TimerId runEvery(Timer::TimeType interval, const Timer::TimerCallback& cb);
     // methods for add Timer to TimerQueue --- end
 
+    static EventLoop* getEventLoopOfCurrentThread();
+
 private:
     using ChannelList = std::vector<Channel*>;
 
@@ -86,7 +93,7 @@ private:
 
     bool looping_;
     bool quit_;
-    std::thread::id threadId_;                  // eventloop所在线程ID
+    const pid_t threadId_;                  // eventloop所在线程ID
     
     ChannelList activeChannels_;
     std::unique_ptr<Poller> poller_;

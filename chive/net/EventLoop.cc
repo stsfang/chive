@@ -10,21 +10,37 @@
 using namespace chive;
 using namespace chive::net;
 
+// 局部线程存储
+__thread EventLoop* t_loopInThisThread = nullptr;
+//
 const int kPollTimeMs = 10000;
+//静态方法
+EventLoop* EventLoop::getEventLoopOfCurrentThread()
+{
+    return t_loopInThisThread;
+}
 
 EventLoop::EventLoop():
     looping_(false),
     quit_(false),
-    threadId_(std::this_thread::get_id()),
+    threadId_(CurrentThread::tid()),
     callingPendingFunctors_(false),
     poller_(new Poller(this))
 {
-    
+    if(t_loopInThisThread)
+    {
+
+    }
+    else 
+    {
+        t_loopInThisThread = this;
+    }
 }
 
 EventLoop::~EventLoop()
 {
-    //assert(!mLooping);
+    assert(!looping_);
+    t_loopInThisThread = nullptr;
 }
 
 void EventLoop::loop()
