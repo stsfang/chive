@@ -3,6 +3,8 @@ cc_library(
     srcs = [
         'EventLoop.cc',
         'Channel.cc',
-        'poller.cc'
+        'poller.cc',
+        'TimerQueue.cc',
+        'Timer.cc'
     ]
 )

@@ -19,7 +19,7 @@ class Poller : chive::noncopyable
 {
 public:
     using ChannelList = std::vector<Channel*> ;
-    Poller(EventLoop* evloop);
+    explicit Poller(EventLoop* evloop);
     ~Poller();
 
     int poll(int timeoutMs, ChannelList* activeChannels);

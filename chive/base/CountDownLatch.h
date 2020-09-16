@@ -3,7 +3,7 @@
 
 #include "chive/base/noncopyable.h"
 #include "chive/base/Condition.h"
-#include "chive/base/MuteLock.h"
+#include "chive/base/MutexLock.h"
 
 namespace chive
 {

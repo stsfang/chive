@@ -9,7 +9,7 @@
 
 using namespace chive;
 
-ConsoleLogger debug;
+ConsoleLogger chive::debug;
 
 // 日志级别string信息
 static const std::map<LogLevel, const std::string> LogLevelInfo =
@@ -40,7 +40,7 @@ const tm* BaseLogger::getLocalTime() {
     auto inTime = std::chrono::system_clock::to_time_t(now);
     localtime_r(reinterpret_cast<const time_t*>(&inTime), &localtime_);
 
-    return &localtime;
+    return &localtime_;
 }
 
 void BaseLogger::endline(LogLevel level, const std::string& message) {
@@ -56,8 +56,9 @@ BaseLogger::LogStream::LogStream(BaseLogger& logger, LogLevel level)
 }
 
 BaseLogger::LogStream::LogStream(const BaseLogger::LogStream& other)
-    : logger_(logger),
-      level_(level) {
+     //: std::ostringstream(other),
+      :logger_(other.logger_),
+      level_(other.level_) {
 
 }
 

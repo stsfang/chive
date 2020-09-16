@@ -27,15 +27,23 @@ public:
     TimerId addTimer(const Timer::TimerCallback &cb, 
                     Timer::Timestamp timeout, 
                     Timer::TimeType interval);
+    void cancel(TimerId timerId){}
     
 private:
     using Entry = std::pair<Timer::Timestamp, std::shared_ptr<Timer>>;
     using TimerList = std::set<Entry>;
 
+    using ActiveTimer = std::pair<std::shared_ptr<Timer>, int64_t>;
+    using ActiveTimerSet = std::set<ActiveTimer>;
+
     EventLoop* loop_;           //
     const int timerfd_;         // 定时器 fd
     Channel timerfdChannel_;    //定时器timerfd专用channel
     TimerList timers_;          //定时器列表
+
+    ActiveTimerSet activeTimers_;
+    ActiveTimerSet cancelingTimers_;
+    bool callingExpiredTimers_;
 
     /**
      * 定时器到期，timerfd可读
@@ -56,7 +64,8 @@ private:
      * @param timer 定时器（智能指针）
      * @return 
      */
-    bool insert(const std::shared_ptr<Timer>& timer)
+    bool insert(const std::shared_ptr<Timer>& timer);
+    void addTimerInLoop(const std::shared_ptr<Timer>& timer);
 
     
 };

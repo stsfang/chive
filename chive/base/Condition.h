@@ -5,6 +5,7 @@
 
 #include <pthread.h>
 #include <cassert>
+#include <errno.h>  /*provide ETIMEDOUT */
 
 namespace chive
 {
@@ -44,7 +45,7 @@ public:
 
 private:
     MutexLock& mutex_;
-    pthread_cond_t pcond_;
+    pthread_cond_t cond_;
 };
 } // namespace chive
 

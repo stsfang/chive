@@ -16,7 +16,7 @@ int Poller::poll(int timeoutMs, ChannelList* activeChannels)
         std::cout << "fill events" << std::endl;
         fillActiveChannels(numEvents, activeChannels);
     } else if(numEvents == 0) {
-
+        
     } else {
 
     }

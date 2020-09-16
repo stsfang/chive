@@ -5,16 +5,17 @@
 #include "chive/net/Timer.h"
 #include "chive/net/Channel.h"
 #include "chive/net/TimerQueue.h"
-#include "chive/net/poller.h"
+// #include "chive/net/poller.h"
 #include "chive/base/CurrentThread.h"
 
+#include "chive/base/MutexLock.h"
 
 #include <vector>
 #include <memory>
 #include <atomic>
 #include <functional>
-#include <mutex>
-#include <thread>
+// #include <mutex>
+// #include <thread>
 
 
 
@@ -25,7 +26,7 @@ namespace net
 
 //前置声明
 // class Channel;
-// class Poller;
+class Poller;
 // class TimerQueue;
 // class TimerId;
 
@@ -47,10 +48,11 @@ public:
     }
 
     inline bool isInLoopThread() {
-        return threadId == CurrentThread::tid();
+        return threadId_ == CurrentThread::tid();
     }
     
    void updateChannel(Channel* channel);
+   void removeChannel(Channel* channel);
    void quit();
 
     /**
@@ -72,6 +74,19 @@ public:
     TimerId runEvery(Timer::TimeType interval, const Timer::TimerCallback& cb);
     // methods for add Timer to TimerQueue --- end
 
+    /**
+     * 取消一个定时器
+     * cancel操作是线程安全的
+     */
+    void cancel(TimerId timerId);
+
+    /**
+     * 唤醒poller
+     */
+    void wakeup();
+
+
+
     static EventLoop* getEventLoopOfCurrentThread();
 
 private:
@@ -80,6 +95,11 @@ private:
     
     void abortNotInLoopThread();
 
+    bool looping_;  //FIXME: need atomic
+    bool quit_;     //FIXME: need atomic
+    const pid_t threadId_;                  // eventloop所在线程ID
+    std::unique_ptr<Poller> poller_;
+    
     // add for transferring operations of TimerQueue to IO thread ---- begin
     void handleRead();                           //唤醒IO线程loop，处理pending任务
     void doPendingFunctors();                   //处理pending task
@@ -87,16 +107,13 @@ private:
     int wakeupFd_;                              // wakeup fd 唤醒线程处理pending task
     std::unique_ptr<Channel> wakeupChannel_;    //专用于wakeup fd 上的readable事件，分发给handleRead()
     std::vector<Functor> pendingFunctors_;      //等待处理的回调任务,需要枷锁保护，因为TimerQueue可以在另一个线程访问之
-    std::mutex mutex_;                          //互斥量
+    MutexLock mutex_;                           //互斥量
+    std::unique_ptr<TimerQueue> timerQueue_;    //定时器队列
     // add for transferring operations of TimerQueue to IO thread ---- end
 
-
-    bool looping_;
-    bool quit_;
-    const pid_t threadId_;                  // eventloop所在线程ID
     
+    Timer::Timestamp pollReturnTime_;
     ChannelList activeChannels_;
-    std::unique_ptr<Poller> poller_;
 };
 
 } // namespace net

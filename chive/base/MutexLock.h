@@ -42,7 +42,7 @@ public:
 
     void unlock() {
         holder_ = 0;
-        ptread_mutex_unlock(&mutex_);
+        pthread_mutex_unlock(&mutex_);
     }
 
     pthread_mutex_t* getPthreadMutexPtr() {

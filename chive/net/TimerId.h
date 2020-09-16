@@ -4,6 +4,7 @@
 #include "chive/base/noncopyable.h"
 #include "chive/net/Timer.h"
 
+#include <memory>
 
 namespace chive
 {

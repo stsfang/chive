@@ -74,7 +74,7 @@ private:
      * @param level 
      * @param message
      */
-    void endline(Loglevel level, const std::string& message);
+    void endline(LogLevel level, const std::string& message);
 
     /**
      * 纯虚函数，打印日志消息
