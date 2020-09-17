@@ -117,7 +117,8 @@ private:
     void output(const tm* tmPtr, const std::string& level, const std::string& message) override;
 };
 
-// 全局实例
+// 使用extern关键字声明外部变量
+// 实现全局实例（只定义一次）
 extern ConsoleLogger debug;
 //extern FileLogger CHIVE_LOG;
 } // namespace chive

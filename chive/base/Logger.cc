@@ -1,4 +1,5 @@
 #include "chive/base/Logger.h"
+#include "chive/base/CurrentThread.h"
 
 #include <cassert>
 #include <chrono>
@@ -6,6 +7,7 @@
 #include <iostream>
 #include <iomanip>
 #include <regex>
+#include <unistd.h>
 
 using namespace chive;
 
@@ -70,6 +72,7 @@ BaseLogger::LogStream::~LogStream() {
 void ConsoleLogger::output(const tm* tmPtr, const std::string& level, const std::string& message) {
     std::cout << '[' << tmPtr << ']'
               << '[' << level << ']'
+              << "[pid " << getpid() << " tid " << CurrentThread::tid() << "]"
               << '\t' << message 
               << std::endl;   
 }

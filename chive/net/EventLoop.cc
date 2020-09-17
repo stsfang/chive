@@ -96,6 +96,7 @@ void EventLoop::loop()
     {
         activeChannels_.clear();
         poller_->poll(kPollTimeMs, &activeChannels_);
+        debug() << "trace in loop" << std::endl;
         for(ChannelList::iterator it = activeChannels_.begin();
             it != activeChannels_.end(); it++)
         {
@@ -144,20 +145,21 @@ void EventLoop::quit()
     // }
 }
 
-TimerId EventLoop::runAt(Timer::Timestamp time, const Timer::TimerCallback& cb)
+TimerId EventLoop::runAt(Timer::Timestamp timeout, const Timer::TimerCallback& cb)
 {
-    return timerQueue_->addTimer(std::move(cb), time, 0);
+    return timerQueue_->addTimer(std::move(cb), timeout, 0);
 }
 
 TimerId EventLoop::runAfter(Timer::TimeType delay, const Timer::TimerCallback& cb)
 {
-    //FIXME: static_cast是否多余
+    ///FIXME: static_cast是否多余
+    ///FIXME: 传入的delay应该是微秒，还是秒
     return runAt(static_cast<Timer::Timestamp>(Timer::now() + delay), std::move(cb));
 }
 
 TimerId EventLoop::runEvery(Timer::TimeType interval, const Timer::TimerCallback& cb)
 {
-    return timerQueue_->addTimer(std::move(cb), Timer::now(), interval);
+    return timerQueue_->addTimer(std::move(cb), Timer::now() + interval, interval);
 }
 
 void EventLoop::cancel(TimerId timerId)
@@ -168,10 +170,12 @@ void EventLoop::cancel(TimerId timerId)
 
 void EventLoop::runInLoop(const Functor& cb)
 {
+    debug() << "trace in EventLoop::runInLoop(), is loop thread " << isInLoopThread() << std::endl;
     // 如果是在 IO 线程，那么直接执行 cb
     if(isInLoopThread())
     {
         cb();
+        debug() << "callback " << &cb << std::endl;
     }
     else    // 否则放到 pendingFunctors_，唤醒 IO 线程去处理cb
     {
@@ -183,6 +187,7 @@ void EventLoop::queueInLoop(const Functor& cb)
 {
     // 需要加锁保护临界区，因为queueInLoop在非 IO 线程上被调用
     // pendingFunctors_ 同时可被 IO 线程访问
+    debug() << "trace in EventLoop::queueInLoop()" << std::endl;
     {
         MutexLockGuard lock(mutex_);
         pendingFunctors_.push_back(cb);
@@ -203,6 +208,7 @@ void EventLoop::queueInLoop(const Functor& cb)
 
 void EventLoop::doPendingFunctors() 
 {
+    debug() << "trace in EventLoop::doPendingFunctors" << std::endl;
     std::vector<Functor> functors;
     callingPendingFunctors_ = true; //此时在IO线程，标志位不需要加锁保护
 
@@ -214,6 +220,8 @@ void EventLoop::doPendingFunctors()
         functors.swap(pendingFunctors_);
     }
 
+    debug() << "trace in EventLoop::doPendingFunctors functors size " 
+            << functors.size() << std::endl;
     for (size_t i = 0; i < functors.size(); ++i)
     {
         functors[i]();
@@ -231,6 +239,8 @@ void EventLoop::wakeup()
         debug(LogLevel::ERROR) << "EventLoop::wakeup() writes " << n 
                                 << " bytes instead of 8" << std::endl; 
     }
+    debug() << "trace in EventLoop::wakeup() write " 
+            << sizeof(one) << " bytes" << std::endl;
 }
 
 /**

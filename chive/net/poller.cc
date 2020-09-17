@@ -1,4 +1,5 @@
 #include "chive/net/poller.h"
+#include "chive/base/Logger.h"
 
 using namespace chive;
 using namespace chive::net;
@@ -20,12 +21,14 @@ int Poller::poll(int timeoutMs, ChannelList* activeChannels)
     } else {
 
     }
+    numEvents = ::poll(&*pollfds_.begin(), pollfds_.size(), timeoutMs);
     //FIXME: should return timestamp
     return 0;
 }
 
 void Poller::fillActiveChannels(int numEvents, ChannelList* activeChannels) const 
 {
+    debug() << "trace in Poller::fillActiveChannels()" << std::endl;
     using poller_iter = PollFdList::const_iterator;
     for(auto pfd = pollfds_.begin(); pfd != pollfds_.end() && numEvents > 0; ++pfd)
     {

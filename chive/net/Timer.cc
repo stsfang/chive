@@ -35,6 +35,9 @@ void Timer::restart(Timestamp now) {
     }
 }
 
+/**
+ * 获取当前系统时间戳（微秒单位）
+ */
 Timer::Timestamp Timer::now() {
     /**
      * timeval {

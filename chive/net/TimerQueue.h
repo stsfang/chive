@@ -46,7 +46,7 @@ private:
     bool callingExpiredTimers_;
 
     /**
-     * 定时器到期，timerfd可读
+     * 定时器到期，处理timerfd可读事件
      */
     void handleRead();
 
