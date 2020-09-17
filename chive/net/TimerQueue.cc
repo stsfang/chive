@@ -2,6 +2,7 @@
 #include "chive/base/Logger.h"
 #include "chive/net/EventLoop.h"
 
+#include "chive/net/Timer.h"
 
 #include <algorithm>
 #include <sys/timerfd.h>

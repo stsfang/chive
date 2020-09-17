@@ -9,6 +9,15 @@ using namespace chive::net;
 //静态变量初始化
 AtomicInt64 Timer::s_numCreated_;
 
+Timer::Timer(const TimerCallback& cb, Timestamp timeout, TimeType interval) 
+    : callback_(cb),
+      expiredTime_(timeout),
+      interval_(interval),
+      repeat_(interval_ > 0),
+      sequence_(s_numCreated_.incrementAndGet()) {
+
+}
+
 void Timer::run() const {
     callback_();
 }
