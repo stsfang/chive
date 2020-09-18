@@ -3,8 +3,12 @@ cc_library(
     srcs = [
         'EventLoop.cc',
         'Channel.cc',
-        'poller.cc',
+        'Poller.cc',
+        'poller/EPollPoller.cc',
         'TimerQueue.cc',
         'Timer.cc'
+    ],
+    deps = [
+   #     '//chive/net/poller/:chive_net_poller'
     ]
 )

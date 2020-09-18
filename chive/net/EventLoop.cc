@@ -1,6 +1,6 @@
 #include "chive/net/EventLoop.h"
 // #include "chive/net/Channel.h"
-#include "chive/net/poller.h"
+#include "chive/net/poller/EPollPoller.h"
 #include "chive/base/Logger.h"
 
 #include <sys/poll.h>
@@ -45,7 +45,7 @@ EventLoop::EventLoop():
     looping_(false),
     quit_(false),
     threadId_(CurrentThread::tid()),
-    poller_(new Poller(this)),
+    poller_(new EPollPoller(this)),
     callingPendingFunctors_(false),
     wakeupFd_(createEventfd()),
     wakeupChannel_(new Channel(this, wakeupFd_)),

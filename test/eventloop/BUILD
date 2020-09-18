@@ -4,7 +4,8 @@ cc_binary(
         'looper.cc',
     ],
     deps = [
-        '//chive/net/:eventloop',
+        '//chive/net/:chive_net',
+        '//chive/base/:chive_base',
         '#pthread'
     ],
 )
