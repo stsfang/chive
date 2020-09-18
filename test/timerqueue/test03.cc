@@ -38,13 +38,13 @@ int main()
   print("main");
   //测试不同线程提交
   std::thread t1([&]{
-      loop.runAfter(1 * 1000 * 1000, std::bind(print, "once1"));
+      loop.runAfter(2 * 1000 * 1000, std::bind(print, "once1"));
   }); t1.join();
-  loop.runAfter(1.5, std::bind(print, "once1.5"));
+  loop.runAfter(1.5 * 1000 * 1000, std::bind(print, "once1.5"));
   loop.runAfter(2.5 * 1000 * 1000, std::bind(print, "once2.5"));
-  loop.runAfter(3.5, std::bind(print, "once3.5"));
-  loop.runEvery(2, std::bind(print, "every2"));
-  loop.runEvery(3, std::bind(print, "every3"));
+  loop.runAfter(3.5 * 1000 * 1000, std::bind(print, "once3.5"));
+  loop.runEvery(2 * 1000 * 1000, std::bind(print, "every2"));
+  loop.runEvery(3 * 1000 * 1000, std::bind(print, "every3"));
 
   loop.loop();
   print("main loop exits");

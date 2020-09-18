@@ -100,13 +100,14 @@ TimerQueue::TimerQueue(EventLoop* loop)
      timers_(),
      callingExpiredTimers_(false)
 {
+    // 设置"读"回调函数并开启可读 (更新到epoll)
     timerfdChannel_.setReadCallback(std::bind(&TimerQueue::handleRead, this));
     timerfdChannel_.enableReading();
 }  
 
 TimerQueue::~TimerQueue()
 {
-    
+    ::close(timerfd_);      // 关闭fd
 }
 
 TimerId TimerQueue::addTimer(const Timer::TimerCallback& cb, Timer::Timestamp when, Timer::TimeType interval) {
@@ -116,6 +117,17 @@ TimerId TimerQueue::addTimer(const Timer::TimerCallback& cb, Timer::Timestamp wh
     debug() << "trace in TimerQueue::addTimer()" << std::endl;
     loop_->runInLoop(std::bind(&TimerQueue::addTimerInLoop, this, timer));
     return *(new TimerId(std::weak_ptr<Timer>(timer)));
+}
+
+void TimerQueue::cancel(const TimerId& timerId)
+{
+    // 注意到timer_成员是weak_ptr所以需要先lock检查
+    // 引用对象是否还存在 
+    auto timer = timerId.timer_.lock();
+    if(timer) {
+        loop_->runInLoop(
+            std::bind(&TimerQueue::cancelInLoop, this, timerId));
+    }
 }
 
 // FIXME: timer传参会不会导致引用计数+1
@@ -131,6 +143,32 @@ void TimerQueue::addTimerInLoop(const std::shared_ptr<Timer>& timer)
         timerfdOps::resetTimerfd(timerfd_, timer->getExpiredTime());
     }
 }
+
+void TimerQueue::cancelInLoop(const TimerId& timerId)
+{
+    loop_->assertInLoopThread();
+    assert(timers_.size() == activeTimers_.size());
+    // TimeQueue是TimerId的友元类，可以直接访问private成员
+    auto cancelTimer = timerId.timer_.lock();
+    assert(cancelTimer);        // 检查弱指针的对象引用是都还存在
+    ActiveTimer timer(cancelTimer, cancelTimer->getSequence());
+    ActiveTimerSet::iterator it = activeTimers_.find(timer);
+    if (it != activeTimers_.end())
+    {
+        // 同时删除两个容器中的定时器
+        auto n = timers_.erase(Entry(it->first->getExpiredTime(), it->first));
+        assert(n == 1); (void)n;
+        activeTimers_.erase(it);
+    }
+    else if (callingExpiredTimers_)
+    {
+        // 防止定时器自注销
+        cancelingTimers_.insert(timer);
+    }
+    // 检查删除的完整性
+    assert(timers_.size() == activeTimers_.size());
+}
+
 
 bool TimerQueue::insert(const std::shared_ptr<Timer>& timer)
 {
@@ -173,6 +211,33 @@ std::vector<TimerQueue::Entry> TimerQueue::getExpired(Timer::Timestamp now) {
     return expired;
 }
 
+void TimerQueue::reset(const std::vector<Entry>& expired, Timer::Timestamp now)
+{
+    for (const auto& it : expired)
+    {
+        // ActiveTimer: std::pair<std::shared_ptr<Timer>, int64_t>
+        ActiveTimer timer(it.second, it.second->getSequence());
+        // 如果timer是周期性触发的，那么需要重新启动
+        if (it.second->repeat()
+                && cancelingTimers_.find(timer) == cancelingTimers_.end())
+        {
+            it.second->restart(now);
+            insert(it.second);
+        }
+        // else Timer is wrapper by std::shared_ptr, it will destructes itself
+    }
+
+    // 选择下一个timer的到期时间作为下一个时间戳
+    // 检查该timer是否合法
+    if(!timers_.empty())
+    {
+        auto nextTimer = timers_.begin()->second;   // timer is type std::shared_ptr
+        if(nextTimer->isValid())
+        {
+            timerfdOps::resetTimerfd(timerfd_, nextTimer->getExpiredTime());
+        }
+    }
+}
 
 void TimerQueue::handleRead()
 {
@@ -194,6 +259,5 @@ void TimerQueue::handleRead()
     
     //处理完定时器任务需要重置
     ///TODO:
-
-    
+    reset(expiredTimers, now);
 }

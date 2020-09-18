@@ -24,10 +24,21 @@ public:
     explicit TimerQueue(EventLoop* loop);
     ~TimerQueue();
 
+    /**
+     * 添加一个定时器
+     * @param cb 定时器到期的回调函数
+     * @param timeout 定时器的到期时间戳
+     * @param intervel 定时器的周期时间间隔 (无周期触发则为0)
+     * @return 返回唯一标识定时器的<Timer,sequenceId>
+     */
     TimerId addTimer(const Timer::TimerCallback &cb, 
                     Timer::Timestamp timeout, 
                     Timer::TimeType interval);
-    void cancel(TimerId timerId){}
+    /**
+     * 取消一个已添加的定时器
+     * @param 唯一标识定时器的<Timer,sequenceId>
+     */
+    void cancel(const TimerId& timerId);
     
 private:
     using Entry = std::pair<Timer::Timestamp, std::shared_ptr<Timer>>;
@@ -51,12 +62,18 @@ private:
     void handleRead();
 
     /**
-     * 移除到期的定时器
+     * 获取到期的定时器列表
      * @param 当前时间戳
-     * @return 返回到期被移除的定时器
+     * @return 返回到期的定时器列表
      */
     std::vector<Entry> getExpired(Timer::Timestamp now);
 
+    /**
+     * 重置周期定时器的到期时间(续命),选择下一个到期时间更新timerfd
+     * 移除到期的一次性定时器
+     * @param expired 到期的定时器列表(包括周期定时器)
+     * @param now 当前时间戳
+     */
     void reset(const std::vector<Entry>& expired, Timer::Timestamp now);
 
     /**
@@ -65,9 +82,18 @@ private:
      * @return 
      */
     bool insert(const std::shared_ptr<Timer>& timer);
+
+    /**
+     * 作为回调函数, 用于IO线程异步添加定时器
+     * 由EventLoop调用doPendingFunctors()分发执行
+     */
     void addTimerInLoop(const std::shared_ptr<Timer>& timer);
 
-    
+    /**
+     * 在EventLoop中撤销一个定时器
+     * @param tiemrId 标识定时器的<Timer, sequenceId>
+     */
+    void cancelInLoop(const TimerId& timerId);
 };
 } // namespace net
 

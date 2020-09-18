@@ -175,7 +175,7 @@ void EventLoop::runInLoop(const Functor& cb)
     if(isInLoopThread())
     {
         cb();
-        debug() << "callback " << &cb << std::endl;
+        debug() << "EventLoop::runInLoop() callback " << &cb << std::endl;
     }
     else    // 否则放到 pendingFunctors_，唤醒 IO 线程去处理cb
     {
