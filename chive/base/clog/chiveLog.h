@@ -90,6 +90,7 @@ extern LevelInfoSet g_logLvInfo[CDebugLevel::MAXLV];
 
 bool createLogDir(const char *path);
 
+void writeToConsole(const char* logLine);
 /**
  * 日志打印核心函数
  */

@@ -20,7 +20,7 @@ LevelInfoSet g_logLvInfo[CDebugLevel::MAXLV] = {
 static CLogContext logContext = {
     false,
     NULL,
-    "/data/vlog/v_log_0.txt",
+    "/data/chive/clog/chive_log_0.txt",
     0,
     0,
     0,
@@ -35,7 +35,12 @@ static int flagThread = -1;
 static pthread_cond_t newfileCondition = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t newfileMutex = PTHREAD_MUTEX_INITIALIZER;
 
-void logDebugPrint(char const * module, VDebugLevel level, char const * pFormat, ...) {
+
+void writeToConsole(const char* logLine) {
+    printf(logLine);
+}
+
+void logDebugPrint(char const * module, CDebugLevel level, char const * pFormat, ...) {
     // 没有开启log，直接返回
     if(logContext.logEnabled  == 0) {
         return;
@@ -66,6 +71,8 @@ void logDebugPrint(char const * module, VDebugLevel level, char const * pFormat,
     if (strBuffer[len-1] != '\n') {
         strBuffer[len++] = '\n';
     }
+
+    writeToConsole(strBuffer);
 
     pthread_mutex_lock(&(logContext.bufMutex));
     if (logContext.bufLen + len < MAX_BUFFER_SIZE) {
@@ -135,10 +142,10 @@ bool getDebugLogFile(CLogContext* pLogContext) {
     }
 
     pthread_mutex_lock(&newfileMutex);
-    if (access(CLOG_FILE, F_OK) == 0) {  // 检查VLOG_FILE是否存在
-        // 将 v_log_0.txt 重命名为 v_log_tmp.txt
-        // 然后通知后台线程对VLOG_DIR目录下的log文件按序重命名
-        if (rename(CLOG_FILE, CLOG_FILE_TMP) == -1) {   // C: 对VLOG_FILE重命名
+    if (access(CLOG_FILE, F_OK) == 0) {  // 检查CLOG_FILE是否存在
+        // 将 chive_log_0.txt 重命名为 chive_log_tmp.txt
+        // 然后通知后台线程对CLOG_DIR目录下的log文件按序重命名
+        if (rename(CLOG_FILE, CLOG_FILE_TMP) == -1) {   // 对CLOG_FILE重命名
             pthread_mutex_unlock(&newfileMutex);        // 重名名失败,释放锁，返回false
             return false;
         }
@@ -147,7 +154,7 @@ bool getDebugLogFile(CLogContext* pLogContext) {
     pthread_cond_signal(&newfileCondition);
     pthread_mutex_unlock(&newfileMutex);
 
-    // 完成重命名之后，打开新文件 v_log_0.txt，新的log继续写入到v_log_0.txt
+    // 完成重命名之后，打开新文件 chive_log_0.txt，新的log继续写入到chive_log_0.txt
     if((pLogContext->pLogFile = fopen(pLogContext->filePath, "a")) == NULL) {
         return false;
     }
@@ -163,23 +170,23 @@ void* fileThreadProcess(void* arg) {
 
         char fileSrc[MAX_PATH_LENGTH], fileDst[MAX_PATH_LENGTH];
         // VLOG_DIR目录下的log文件重新按序命名
-        // e.g.  v_log_11.txt ==> v_log_12.txt
+        // e.g.  chive_log_11.txt ==> chive_log_12.txt
         // ...
-        // v_log_1.txt ==> v_log_2.txt
+        // chive_log_1.txt ==> chive_log_2.txt
         for (int i = logContext.maxFileCnt - 2; i > 0; --i) {
-            sprintf(fileSrc, "%s%s%d%s", CLOG_DIR, "v_log_", i, ".txt");
+            sprintf(fileSrc, "%s%s%d%s", CLOG_DIR, "chive_log_", i, ".txt");
             if (access(fileSrc, F_OK) == 0) {
-                sprintf(fileDst, "%s%s%d%s", CLOG_DIR, "v_log_", i+1, ".txt");
+                sprintf(fileDst, "%s%s%d%s", CLOG_DIR, "chive_log_", i+1, ".txt");
                 if(rename(fileSrc, fileDst) == -1) {
                     break;
                 }
             }
         }
 
-        // v_log_tmp.txt ==> v_log_1.txt
-        // 如此就能保证每次把最新log写入到文件 v_log_0.txt
-        sprintf(fileSrc, "%s%s%s", CLOG_DIR, "v_log_tmp", ".txt");
-        sprintf(fileDst, "%s%s%s", CLOG_DIR, "v_log_1", ".txt");
+        // chive_log_tmp.txt ==> chive_log_1.txt
+        // 如此就能保证每次把最新log写入到文件 chive_log_0.txt
+        sprintf(fileSrc, "%s%s%s", CLOG_DIR, "chive_log_tmp", ".txt");
+        sprintf(fileDst, "%s%s%s", CLOG_DIR, "chive_log_1", ".txt");
         if(access(fileSrc, F_OK) == 0) {
             rename(fileSrc, fileDst);
         }

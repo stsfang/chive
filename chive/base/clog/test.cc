@@ -1,4 +1,4 @@
-#include "../chiveLog.h"
+#include "chiveLog.h"
 
 int main() {
     startLogPrint(NULL);

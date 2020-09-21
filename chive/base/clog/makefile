@@ -1,9 +1,9 @@
-vlog:test.o LogControl.o
-	g++ test.o -g LogControl.o -o vlog -pthread -std=c++17
+clog:test.o chiveLog.o
+	g++ test.o -g chiveLog.o -o clog -pthread -std=c++17
+	rm *.o -f
 test.o:test.cc 
 	g++ -c -g test.cc -o test.o -std=c++17
-LogControl.o:LogControl.cc
-	g++ -c -g LogControl.cc -o LogControl.o -std=c++17
+chiveLog.o:chiveLog.cc
+	g++ -c -g chiveLog.cc -o chiveLog.o -std=c++17
 clean:
-	rm *.o  -f
-	rm vlog -f
+	rm clog -f
