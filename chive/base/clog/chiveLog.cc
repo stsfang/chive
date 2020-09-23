@@ -131,8 +131,12 @@ int strToLog(char* strBuffer) {
                     strBuffer);
     }
     int len = strlen(newStrBuf);
-    memcpy(strBuffer, newStrBuf, len);
-    return len;
+    /// fix bug#memcpy vs strcpy
+    /// memcpy 拷贝前num个,忽略\0; strcpy 遇到 \0 结束拷贝
+    /// 所以这里必须是len+1才能把 \0 也拷贝过去
+    memcpy(strBuffer, newStrBuf, len+1);
+    // strBuffer[len] = '\0';
+    return len+1;
 }
 
 bool getDebugLogFile(CLogContext* pLogContext) {
