@@ -100,6 +100,7 @@ void Socket::bindAddress(const InetAddress& localAddr)
 
 void  Socket::listen()
 {
+    CHIVE_LOG_DEBUG("socket %d begin listening...", sockfd_);
     // SOMAXCONN 内核参数， 默认128，可调优
     if(::listen(sockfd_, SOMAXCONN) < 0)
     {
@@ -118,6 +119,7 @@ int Socket::accept(InetAddress* peerAddr)
     if(connfd >= 0)
     {
         peerAddr->setSockAddr(address);
+        CHIVE_LOG_DEBUG("socket %d accept new connection fd %d", sockfd_, connfd);
         return connfd;
     }
     else 

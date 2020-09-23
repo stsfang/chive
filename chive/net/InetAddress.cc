@@ -1,6 +1,6 @@
 #include "chive/net/InetAddress.h"
 #include "chive/base/clog/chiveLog.h"
-#include "chive/base/Logger.h"
+// #include "chive/base/Logger.h"
 
 #include <string.h>
 #include <arpa/inet.h>
@@ -61,8 +61,7 @@ std::string InetAddress::toIpPort() const
     ::inet_ntop(AF_INET, &addr_.sin_addr, host, static_cast<socklen_t>(sizeof(host)));
 
     uint16_t port = be16toh(addr_.sin_port);
-    snprintf(buf, size, "%s:%u", host, port);
-    debug() << "ip: " << host << " port " << port << std::endl;
+    snprintf(buf, size, "%s:%d", host, port);
     return buf;
 }
 
@@ -89,7 +88,7 @@ sockaddr_in InetAddress::getLocalAddress(int sockfd)
     if (::getsockname(sockfd, reinterpret_cast<sockaddr*>(&localAddr), 
                                     static_cast<socklen_t*>(&addrLen) ) < 0)
     {
-        CHIVE_LOG_ERROR("%s", "getsockname failed!");
+        CHIVE_LOG_ERROR("getsockname failed!");
     }
     return localAddr;
 }
@@ -101,7 +100,7 @@ sockaddr_in InetAddress::getPeerAddress(int sockfd)
     if (::getpeername(sockfd, reinterpret_cast<sockaddr*>(&peerAddr), 
                     static_cast<socklen_t*>(&addrLen)) < 0)
     {
-        CHIVE_LOG_ERROR("%s", "getpeername failed!");
+        CHIVE_LOG_ERROR("getpeername failed!");
     }
     return peerAddr;
 }

@@ -1,7 +1,7 @@
 #include "chive/net/EventLoop.h"
 // #include "chive/net/Channel.h"
 #include "chive/net/poller/EPollPoller.h"
-#include "chive/base/Logger.h"
+#include "chive/base/clog/chiveLog.h"
 
 #include <sys/poll.h>
 #include <iostream>
@@ -27,7 +27,7 @@ int createEventfd()
     int evtfd = ::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
     if (evtfd < 0)
     {
-        debug(LogLevel::ERROR) << "Failed in eventfd" << std::endl;
+        CHIVE_LOG_DEBUG("Abort since creating eventfd failed! evtfd %d", evtfd);
         abort();    //中断程序
     }
     return evtfd;
@@ -51,11 +51,11 @@ EventLoop::EventLoop():
     wakeupChannel_(new Channel(this, wakeupFd_)),
     timerQueue_(new TimerQueue(this))
 {
-    debug() << "EventLoop created " << this << " in thread" << threadId_ << std::endl;
+    CHIVE_LOG_DEBUG("EventLoop created %p in thread %d", this, threadId_);
     if(t_loopInThisThread)
     {
-        debug(LogLevel::ERROR) << "Another EventLoop " << t_loopInThisThread
-                               << " exits in this thread " << threadId_ << std::endl;
+        CHIVE_LOG_ERROR("Another EventLoop %p exits in this thread %d",
+                            t_loopInThisThread, threadId_);
     }
     else 
     {
@@ -71,8 +71,8 @@ EventLoop::EventLoop():
 
 EventLoop::~EventLoop()
 {
-    debug() << "EventLoop " << this << " of thread " << threadId_
-            << " destructs in thread " << CurrentThread::tid() << std::endl;
+    CHIVE_LOG_DEBUG("EventLoop %p of thread %d destructs in thread %d", 
+                        this, threadId_, CurrentThread::tid());
     
     assert(!looping_);
     t_loopInThisThread = nullptr;
@@ -90,13 +90,13 @@ void EventLoop::loop()
     looping_ = true;
     quit_ = false;
 
-    debug() << "EventLoop " << this << " start looping" << std::endl;
+    CHIVE_LOG_DEBUG("EventLoop %p start looping", this);
 
     while(!quit_)
     {
         activeChannels_.clear();
         poller_->poll(kPollTimeMs, &activeChannels_);
-        debug() << "trace in loop" << std::endl;
+        CHIVE_LOG_DEBUG("trace in loop");
         for(ChannelList::iterator it = activeChannels_.begin();
             it != activeChannels_.end(); it++)
         {
@@ -105,7 +105,7 @@ void EventLoop::loop()
         // 每次从poll中监听到事件时，检查是否有pendingFunctors待处理
         doPendingFunctors();
     }
-    debug() << "EventLoop " << this << " stop looping" << std::endl;
+    CHIVE_LOG_DEBUG("EventLoop %p stop looping", this);
     looping_ = false;
 }
 
@@ -123,16 +123,14 @@ void EventLoop::removeChannel(Channel* channel)
 
     // FIXME: poller未实现
     // poller_->removeChannel(channel);
-    debug() << "poller has not implement removeChannel yet" << std::endl;
+    CHIVE_LOG_DEBUG("poller has not implement removeChannel yet");
 }
 
 //FIXME: 是否中断程序执行？
 void EventLoop::abortNotInLoopThread() 
 {
-    debug(LogLevel::ERROR) << "Error: EventLoop::abortNotInLoopThread - EventLoop " 
-                            << this << " was created in threadId_ " << threadId_
-                            << ", current thread id = " << CurrentThread::tid()
-                            << std::endl;
+    CHIVE_LOG_ERROR("Error:EventLoop %p was created in threadId_ %d current thread %d", 
+                            this, threadId_, CurrentThread::tid());
 }
 
 void EventLoop::quit()
@@ -170,12 +168,12 @@ void EventLoop::cancel(TimerId timerId)
 
 void EventLoop::runInLoop(const Functor& cb)
 {
-    debug() << "trace in EventLoop::runInLoop(), is loop thread " << isInLoopThread() << std::endl;
+    CHIVE_LOG_DEBUG("is loop thread %d",isInLoopThread());
     // 如果是在 IO 线程，那么直接执行 cb
     if(isInLoopThread())
     {
+        CHIVE_LOG_DEBUG("in loop thread, callback now");
         cb();
-        debug() << "EventLoop::runInLoop() callback " << &cb << std::endl;
     }
     else    // 否则放到 pendingFunctors_，唤醒 IO 线程去处理cb
     {
@@ -187,7 +185,7 @@ void EventLoop::queueInLoop(const Functor& cb)
 {
     // 需要加锁保护临界区，因为queueInLoop在非 IO 线程上被调用
     // pendingFunctors_ 同时可被 IO 线程访问
-    debug() << "trace in EventLoop::queueInLoop()" << std::endl;
+    CHIVE_LOG_DEBUG("trace in EventLoop::queueInLoop()");
     {
         MutexLockGuard lock(mutex_);
         pendingFunctors_.push_back(cb);
@@ -208,7 +206,7 @@ void EventLoop::queueInLoop(const Functor& cb)
 
 void EventLoop::doPendingFunctors() 
 {
-    debug() << "trace in EventLoop::doPendingFunctors" << std::endl;
+    CHIVE_LOG_DEBUG("trace in EventLoop::doPendingFunctors");
     std::vector<Functor> functors;
     callingPendingFunctors_ = true; //此时在IO线程，标志位不需要加锁保护
 
@@ -220,8 +218,7 @@ void EventLoop::doPendingFunctors()
         functors.swap(pendingFunctors_);
     }
 
-    debug() << "trace in EventLoop::doPendingFunctors functors size " 
-            << functors.size() << std::endl;
+    CHIVE_LOG_DEBUG("functors size %d", functors.size());
     for (size_t i = 0; i < functors.size(); ++i)
     {
         functors[i]();
@@ -236,11 +233,9 @@ void EventLoop::wakeup()
     ssize_t n = ::write(wakeupFd_, &one, sizeof(one));
     if (n != sizeof(one))
     {
-        debug(LogLevel::ERROR) << "EventLoop::wakeup() writes " << n 
-                                << " bytes instead of 8" << std::endl; 
+        CHIVE_LOG_ERROR("writes %d bytes instead of 8", n); 
     }
-    debug() << "trace in EventLoop::wakeup() write " 
-            << sizeof(one) << " bytes" << std::endl;
+    CHIVE_LOG_INFO("write %d bytes", sizeof(one));
 }
 
 /**
@@ -253,8 +248,8 @@ void EventLoop::handleRead()
     ssize_t n = ::read(wakeupFd_, &one, sizeof(one));
     if (n != sizeof(one))
     {
-        debug(LogLevel::ERROR) << "EventLoop::handleRead() reads " << n 
-                                << " bytes instead of 8" << std::endl;
+        CHIVE_LOG_ERROR("reads %d bytes instead of 8", n);
+                                
     }
 }
 

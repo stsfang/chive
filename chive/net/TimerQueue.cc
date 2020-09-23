@@ -1,5 +1,6 @@
 #include "chive/net/TimerQueue.h"
-#include "chive/base/Logger.h"
+// #include "chive/base/Logger.h"
+#include "chive/base/clog/chiveLog.h"
 #include "chive/net/EventLoop.h"
 
 #include "chive/net/Timer.h"
@@ -28,7 +29,7 @@ int createTimerfd()
                                  TFD_NONBLOCK | TFD_CLOEXEC);
   if (timerfd < 0)
   {
-    debug() << "Failed in timerfd_create" << std::endl;
+    CHIVE_LOG_ERROR("timerfd_create failed! timerfd %d", timerfd);
   }
   return timerfd;
 }
@@ -50,7 +51,7 @@ struct itimerspec {
  */
 void resetTimerfd(int timerfd, Timer::Timestamp expiration) 
 {
-    debug() << "trace in reset timerfd" << std::endl;
+    CHIVE_LOG_DEBUG("trace in reset timerfd");
     struct itimerspec newValue;
     struct itimerspec oldValue;
     memset(&oldValue, 0, sizeof(oldValue));
@@ -60,7 +61,7 @@ void resetTimerfd(int timerfd, Timer::Timestamp expiration)
     // expiration可能已经过期，需要重新设置新的超时时间
     int ret = timerfd_settime(timerfd, 0, &newValue, &oldValue);
     if(ret) {
-        debug(LogLevel::ERROR) << "timerfd_setttime()" << std::endl;
+        CHIVE_LOG_DEBUG("timerfd_setttime, ret %d", ret);
     }
 }
 
@@ -82,13 +83,9 @@ void readTimerfd(int timerfd, Timer::Timestamp now)
     uint64_t howmany = 1;
     
     ssize_t n = read(timerfd, &howmany, sizeof(howmany));
-    debug() << "TimerQueue::readTimerfd() read " 
-            << n << " bytes from timerfd " << timerfd 
-            << " at " << now << std::endl;
+    CHIVE_LOG_DEBUG("TimerQueue::readTimerfd() read %d bytes from timerfd %d", n, timerfd);
     if(n != sizeof(howmany)) {
-        debug(LogLevel::ERROR) << "TimerQueue::readTimerfd() reads "
-                                << n << " bytes instead of 8 " 
-                                << std::endl;
+        CHIVE_LOG_ERROR("reads %d bytes instead of 8", n);
     }
 }
 };
@@ -114,7 +111,7 @@ TimerId TimerQueue::addTimer(const Timer::TimerCallback& cb, Timer::Timestamp wh
     std::shared_ptr<Timer> timer(new Timer(cb, when, interval));
     // 将添加定时器的操作转移到 IO 线程，让 IO 线程执行添加操作
     // 如此不加锁也能保证线程安全
-    debug() << "trace in TimerQueue::addTimer()" << std::endl;
+    CHIVE_LOG_DEBUG("trace in TimerQueue::addTimer()");
     loop_->runInLoop(std::bind(&TimerQueue::addTimerInLoop, this, timer));
     return *(new TimerId(std::weak_ptr<Timer>(timer)));
 }
@@ -133,13 +130,13 @@ void TimerQueue::cancel(const TimerId& timerId)
 // FIXME: timer传参会不会导致引用计数+1
 void TimerQueue::addTimerInLoop(const std::shared_ptr<Timer>& timer)
 {
-    debug() << "trace in TimerQueue::addTimerInLoop()" << std::endl;
+    CHIVE_LOG_DEBUG("trace in TimerQueue::addTimerInLoop()");
     loop_->assertInLoopThread();
     bool isEarliest = insert(timer);
     
     if(isEarliest) {
-        debug() << "trace in TimerQueue::addTimerInLoop() timestamp "
-                << timer->getExpiredTime() << std::endl;
+        CHIVE_LOG_INFO("trace in TimerQueue::addTimerInLoop() timestamp %d", 
+                            timer->getExpiredTime());
         timerfdOps::resetTimerfd(timerfd_, timer->getExpiredTime());
     }
 }
@@ -190,8 +187,7 @@ bool TimerQueue::insert(const std::shared_ptr<Timer>& timer)
         auto result = activeTimers_.insert(ActiveTimer(timer, timer->getSequence()));
         assert(result.second); (void)result;
     }
-    debug() << "trace in TimerQueue::insert() timestamp " << when 
-            << " timer sequence " << timer->getSequence() << std::endl;
+    CHIVE_LOG_DEBUG("timestamp %ld timer sequence %ld", when,timer->getSequence());
     assert(timers_.size() == activeTimers_.size());
     return earliestChanged;
 }
@@ -249,7 +245,7 @@ void TimerQueue::handleRead()
     callingExpiredTimers_ = true;
     cancelingTimers_.clear();
 
-    debug() << "trace in TimerQueue::handleRead() run task" << std::endl;
+    CHIVE_LOG_DEBUG("run %d tasks", expiredTimers.size());
     // 逐个调用定时器上绑定的任务
     for(const auto& timer : expiredTimers)
     {
