@@ -30,15 +30,18 @@ EPollPoller::EPollPoller(EventLoop* loop)
     {
         CHIVE_LOG_ERROR("create epollfd failed!, epollfd_ %d", epollfd_);
     }
+    CHIVE_LOG_DEBUG("epoller created.")
 }
 
 EPollPoller::~EPollPoller()
 {
+    CHIVE_LOG_DEBUG("epoller closed.")
     ::close(epollfd_);  //关闭内核事件表
 }
 
 Timestamp EPollPoller::poll(int timeoutMs, ChannelList* activeChannels)
 {
+    CHIVE_LOG_DEBUG("epoller begins polling...");
     CHIVE_LOG_DEBUG("registerd channels total number %d", channels_.size());
     // 开始监听epollfd
     int numEvents = ::epoll_wait(epollfd_,

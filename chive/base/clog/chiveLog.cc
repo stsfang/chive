@@ -68,14 +68,14 @@ void logDebugPrint(char const * module, CDebugLevel level, char const * pFormat,
     }
     // 加上时间和线程等信息
     int len = strToLog(strBuffer);
-
+    // strBuffer ends with '\0', so console log based on 'printf'
+    // can perform normally
     writeToConsole(strBuffer);
-
+    // since '\0' means the end-of-line, so replace '\0' with '\n'
+    // to make console log compatible with file log
     if (strBuffer[len-1] == '\0' ) {
         strBuffer[len-1] = '\n';
-    }
-    else if(strBuffer[len-1] != '\n')
-    {
+    } else if(strBuffer[len-1] != '\n') {
         strBuffer[len++] = '\n';
     }
 
