@@ -58,7 +58,7 @@ std::string InetAddress::toIpPort() const
     // <netinet/in.h>
     // #define INET_ADDRSTRLEN 16 /* for IPv4 dotted-decimal */
     char host[INET_ADDRSTRLEN] = "INVALID";
-    ::inet_ntop(AF_INET, &addr_.sin_addr, host, static_cast<socklen_t>(strlen(host)));
+    ::inet_ntop(AF_INET, &addr_.sin_addr, host, static_cast<socklen_t>(sizeof(host)));
 
     uint16_t port = be16toh(addr_.sin_port);
     snprintf(buf, size, "%s:%u", host, port);
