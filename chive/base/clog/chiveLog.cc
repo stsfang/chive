@@ -68,11 +68,16 @@ void logDebugPrint(char const * module, CDebugLevel level, char const * pFormat,
     }
     // 加上时间和线程等信息
     int len = strToLog(strBuffer);
-    if (strBuffer[len-1] != '\n') {
-        strBuffer[len++] = '\n';
-    }
 
     writeToConsole(strBuffer);
+
+    if (strBuffer[len-1] == '\0' ) {
+        strBuffer[len-1] = '\n';
+    }
+    else if(strBuffer[len-1] != '\n')
+    {
+        strBuffer[len++] = '\n';
+    }
 
     pthread_mutex_lock(&(logContext.bufMutex));
     if (logContext.bufLen + len < MAX_BUFFER_SIZE) {
