@@ -112,10 +112,10 @@ public:
      * 获取socket fd 上的errno 错误码
      * @return errno
      */
-    int Socket::getSocketError();
+    int getSocketError();
 
 private:
-    const int sockfd_;
+    int sockfd_;
 };
 
 } // namespace net

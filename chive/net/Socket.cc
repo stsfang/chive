@@ -1,6 +1,7 @@
 #include "chive/net/Socket.h"
 #include "chive/base/clog/chiveLog.h"
 #include "chive/net/InetAddress.h"
+#include "chive/base/Logger.h"
 
 #include <unistd.h>
 #include <netinet/in.h>
@@ -9,6 +10,7 @@
 #include <sys/socket.h>
 #include <stdio.h>      /// snprintf
 #include <string.h>
+#include <arpa/inet.h>
 
 
 using namespace chive;
@@ -26,12 +28,12 @@ Socket::~Socket()
 Socket::Socket(Socket &&socket) noexcept 
     : sockfd_ (socket.sockfd_)
 {
-    socket.setTcpNoneFd();
+    socket.setNoneFd();
 }
 
 Socket& Socket::operator=(Socket&& rhs) noexcept
 {
-    if (this != rhs)
+    if (this != &rhs)
     {
         sockfd_ = rhs.fd();
         rhs.setNoneFd();
@@ -56,14 +58,14 @@ int setsockopt( int socket, int level, int option_name,
 bool Socket::getTcpInfo(struct tcp_info* tcpInfo) const 
 {
     socklen_t len = sizeof(*tcpInfo);
-    memset(tcpInfo, len);
+    memset(tcpInfo, 0, len);
     return ::getsockopt(sockfd_, SOL_TCP, TCP_INFO, tcpInfo, &len) == 0;
 }
 
 bool Socket::getTcpInfoString(char* buf, int len) const
 {
-    struct tcp_info tcpInfo;
-    bool ok = getTcpInfo(&tcpInfo);
+    struct tcp_info tcpi;
+    bool ok = getTcpInfo(&tcpi);
     if (ok)
     {
         snprintf(buf, len, "unrecovered=%u "
@@ -111,7 +113,7 @@ int Socket::accept(InetAddress* peerAddr)
     auto addressLen = static_cast<socklen_t>(sizeof(address));
     /// ::accept4 非标准扩展,#include <sys/socket.h>
     /// 4th param 设置操作类型
-    int connfd = ::accept4(sockfd_, reinterpret_cast<sockadd*>(&adress),
+    int connfd = ::accept4(sockfd_, reinterpret_cast<sockaddr*>(&address),
                             &addressLen, SOCK_NONBLOCK|SOCK_CLOEXEC);
     if(connfd >= 0)
     {
@@ -146,7 +148,7 @@ int Socket::accept(InetAddress* peerAddr)
                 // unexpected errors
                 CHIVE_LOG_ERROR("unexpected error of ::accept4, errno %d", savedErrno);
                 break;
-            case default:
+            default:
                 CHIVE_LOG_ERROR("unknown error of ::accept4, errno %d",savedErrno);
                 break;
         }

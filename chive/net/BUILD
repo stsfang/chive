@@ -6,7 +6,10 @@ cc_library(
         'Poller.cc',
         'poller/EPollPoller.cc',
         'TimerQueue.cc',
-        'Timer.cc'
+        'Timer.cc',
+        'Acceptor.cc',
+        'Socket.cc',
+        'InetAddress.cc',
     ],
     deps = [
    #     '//chive/net/poller/:chive_net_poller'

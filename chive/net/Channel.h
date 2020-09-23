@@ -9,14 +9,13 @@ namespace chive
 namespace net
 {
 class EventLoop;
-
-class Channel: chive::noncopyable 
+class Channel: noncopyable 
 {
 public:
     using EventCallback = std::function<void()>;
 
     Channel(EventLoop* evloop, int fd);
-    ~Channel() = default;
+    ~Channel();
 
     /**
      * channel核心，根据不同的revents值调用对应的回调函数
@@ -96,6 +95,7 @@ public:
     EventLoop* getOwnerLoop() { return loop_; }
 
 private:
+    using Timestamp = uint64_t;
     /**
      * 通过loop将fd及其事件更新到poller
      */
@@ -104,7 +104,7 @@ private:
     /**
      * handleEvent的核心
      */
-    void handleEventWithGuard(Timer::Timestamp receiveTime);
+    void handleEventWithGuard(Timestamp receiveTime);
     
     /**
      * 事件编号,需要include POSIX头文件

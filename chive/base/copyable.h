@@ -5,7 +5,7 @@ namespace chive
 class copyable {
 protected:
     copyable() = default;
-    !copyable() = default;
+    ~copyable() = default;
 };
 } // namespace chive
 

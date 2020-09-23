@@ -23,9 +23,9 @@ namespace sockets
 class InetAddress : chive::copyable
 {
 public:
-    explicit InetAddress(uint16_t port = 0, bool loopbackOnly = false, bool ipv6 = false);
+    explicit InetAddress(uint16_t port = 0);
 
-    InetAddress(const std::string& ip, uint64_t port, bool ipv6 = false);
+    InetAddress(const std::string& ip, uint16_t port);
 
     explicit InetAddress(const struct sockaddr_in& addr)
         : addr_ (addr)
@@ -64,7 +64,7 @@ public:
     /**
      * 获取网络字节序的IP地址
      */
-    uint32_t ipNetEndian() const;
+    uint32_t ipNetEndian() const { return addr_.sin_addr.s_addr; }
     
     /**
      * 获取网络字节序的端口号

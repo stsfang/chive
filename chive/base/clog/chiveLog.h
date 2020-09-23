@@ -78,13 +78,13 @@ extern LevelInfoSet g_logLvInfo[CDebugLevel::MAXLV];
 // 目前支持5种级别打印日志
 #define CHIVE_LOG_ERROR(fmt, args...) \
     CHIVE_LOG("CHIVE", CDebugLevel::ERROR, g_logLvInfo[CDebugLevel::ERROR].name, fmt, ##args)
-#define CHIVE_LOG_WARN(group, fmt, args...) \
+#define CHIVE_LOG_WARN(fmt, args...) \
     CHIVE_LOG("CHIVE", CDebugLevel::WARN, g_logLvInfo[CDebugLevel::WARN].name, fmt, ##args)
-#define CHIVE_LOG_INFO(group, fmt, args...) \
+#define CHIVE_LOG_INFO(fmt, args...) \
     CHIVE_LOG("CHIVE", CDebugLevel::INFO, g_logLvInfo[CDebugLevel::INFO].name, fmt, ##args)
-#define CHIVE_LOG_DEBUG(group, fmt, args...) \
+#define CHIVE_LOG_DEBUG(fmt, args...) \
     CHIVE_LOG("CHIVE", CDebugLevel::DEBUG, g_logLvInfo[CDebugLevel::DEBUG].name, fmt, ##args)
-#define CHIVE_LOG_VERB(group, fmt, args...) \
+#define CHIVE_LOG_VERB(fmt, args...) \
     CHIVE_LOG("CHIVE", CDebugLevel::VERB, g_logLvInfo[CDebugLevel::VERB].name, fmt, ##args)
 
 

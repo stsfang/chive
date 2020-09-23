@@ -37,7 +37,7 @@ static pthread_mutex_t newfileMutex = PTHREAD_MUTEX_INITIALIZER;
 
 
 void writeToConsole(const char* logLine) {
-    printf(logLine);
+    printf("%s\n", logLine);
 }
 
 void logDebugPrint(char const * module, CDebugLevel level, char const * pFormat, ...) {
@@ -55,12 +55,12 @@ void logDebugPrint(char const * module, CDebugLevel level, char const * pFormat,
     va_end(args);
 
     // 写出到控制台
-    if (level == CDebugLevel::ERROR 
-            || level == CDebugLevel::DEBUG 
-            || strcmp(module, "CHIVE") == 0 && level == CDebugLevel::INFO) {
-        /// FIXME:
-        // writeToConsole(level,module,strBuffer);
-    }
+    // if ((level == CDebugLevel::ERROR)
+    //         || (level == CDebugLevel::DEBUG)
+    //         || (strcmp(module, "CHIVE") == 0 && level == CDebugLevel::INFO) ) {
+    //     /// FIXME:
+    //     writeToConsole(strBuffer);
+    // }
 
     // file未创建
     if (logContext.pLogFile == NULL) {
@@ -124,7 +124,7 @@ int strToLog(char* strBuffer) {
 
     if (curTime != NULL) {
         // 格式 年-月-日 时:分:秒:微秒 进程号 线程号 格式化字符串
-        snprintf(newStrBuf, MAX_BUFFER_SIZE - 1, "%04d-%02d-%02d %02d:%02d:%02d.%03ld %4d %4d %s",
+        snprintf(newStrBuf, MAX_BUFFER_SIZE - 1, "%04d-%02d-%02d %02d:%02d:%02d.%03ld %4d %4ld %s",
                     curTime->tm_year + 1900, curTime->tm_mon+1, curTime->tm_mday, 
                     curTime->tm_hour, curTime->tm_min, curTime->tm_sec, tv.tv_usec / 1000,
                     getpid(), gettid(),

@@ -1,10 +1,11 @@
 #include "chive/net/InetAddress.h"
 #include "chive/base/clog/chiveLog.h"
+#include "chive/base/Logger.h"
 
 #include <string.h>
 #include <arpa/inet.h>
 
-// #include <endian.h>
+#include <endian.h>             /// htobe16()...
 
 using namespace chive::net;
 
@@ -28,15 +29,15 @@ InetAddress::InetAddress(uint16_t port)
 {
     addr_.sin_family = AF_INET;
     addr_.sin_addr.s_addr = INADDR_ANY;
-    addr_.sin_port = ::htobe16(port); // 主机字节序转网络字节序
+    addr_.sin_port = htobe16(port); // 主机字节序转网络字节序
 }
 
 InetAddress::InetAddress(const std::string& ip, uint16_t port)
     : addr_{}
 {
     addr_.sin_family = AF_INET;
-    addr_.sin_port = ::htobe16(port);
-    if (::inet_pton(AF_INET, ip.c_str()m &addr_.sin_addr) <= 0)
+    addr_.sin_port = htobe16(port);
+    if (::inet_pton(AF_INET, ip.c_str(), &addr_.sin_addr) <= 0)
     {
         CHIVE_LOG_ERROR("inet_pton failed!");
     }
@@ -59,15 +60,16 @@ std::string InetAddress::toIpPort() const
     char host[INET_ADDRSTRLEN] = "INVALID";
     ::inet_ntop(AF_INET, &addr_.sin_addr, host, static_cast<socklen_t>(strlen(host)));
 
-    uint16_t port = ::be16toh(addr_sin_port);
+    uint16_t port = be16toh(addr_.sin_port);
     snprintf(buf, size, "%s:%u", host, port);
+    debug() << "ip: " << host << " port " << port << std::endl;
     return buf;
 }
 
 
-uint64_t toPort() const 
+uint64_t InetAddress::toPort() const 
 {
-    return ::be16toh(portNetEndian());      // 网络字节序到主机序端口号
+    return be16toh(portNetEndian());      // 网络字节序到主机序端口号
 }
 
 const sockaddr_in& InetAddress::getSockAddr() const 
@@ -80,32 +82,24 @@ void InetAddress::setSockAddr(const sockaddr_in& addr)
     addr_  = addr;
 }
 
-uint32_t ipNetEndian() const 
-{
-    return addr_.sin_addr.s_addr;
-}
-
-uint16_t InetAddress::ipNetEndian() const 
-{
-    return addr_.sin_port;
-}
-
-sockaddr_in getLocalAddress(int sockfd)
+sockaddr_in InetAddress::getLocalAddress(int sockfd)
 {
     sockaddr_in localAddr {};
     socklen_t addrLen = sizeof(localAddr);
-    if (::getsockname(sockfd, reinterpret_cast<sockaddr*>(&localAddr), addrLen) < 0)
+    if (::getsockname(sockfd, reinterpret_cast<sockaddr*>(&localAddr), 
+                                    static_cast<socklen_t*>(&addrLen) ) < 0)
     {
         CHIVE_LOG_ERROR("%s", "getsockname failed!");
     }
     return localAddr;
 }
 
-sockaddr_in getPeerAddress(int sockfd)
+sockaddr_in InetAddress::getPeerAddress(int sockfd)
 {
     sockaddr_in peerAddr {};
     socklen_t addrLen = sizeof(peerAddr);
-    if (::getpeername(sockfd, reinterpret_cast<sockaddr*>(&peerAddr), addrLen) < 0)
+    if (::getpeername(sockfd, reinterpret_cast<sockaddr*>(&peerAddr), 
+                    static_cast<socklen_t*>(&addrLen)) < 0)
     {
         CHIVE_LOG_ERROR("%s", "getpeername failed!");
     }

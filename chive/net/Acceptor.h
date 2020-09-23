@@ -14,9 +14,15 @@ namespace net
 class EventLoop;
 class InetAddress;
 
+// Acceptor is only seen internally, the users cannot use it directly.
+// 
 class Acceptor : noncopyable
 {
 public:
+    /// FIXME:
+    /// replace sockfd(int) with Socket(obj)
+    /// base on movable constructor
+    /// using NewConnectionCallback = std::function<void (Socket&& socket, const InetAddress&)>;
     using NewConnectionCallback = std::function<void (int sockfd, const InetAddress&)>;
 
     Acceptor(EventLoop* loop, const InetAddress& listenAddr, bool reuseport = false);
@@ -43,7 +49,7 @@ private:
     void handleRead();
     
     EventLoop* loop_;                           /// 
-    Socket accepSocket_;                        /// 
+    Socket acceptSocket_;                        /// 
     Channel acceptChannel_;                     // 
     NewConnectionCallback newConnCallback_;     /// 回调函数
     bool listening_;                            /// 监听状态

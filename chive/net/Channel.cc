@@ -61,7 +61,7 @@ void Channel::handleEvent()
     }
 }
 
-void Channel::handleEventWithGuard(Timer::Timestamp receiveTime)
+void Channel::handleEventWithGuard(Timestamp receiveTime)
 {
     if (revents_ & (POLLERR | POLLNVAL))
     {

@@ -11,12 +11,12 @@
 using namespace chive;
 using namespace chive::net;
 
-namespace sockets {
+
 
 int createNonblocking()
 {
     int sockfd = ::socket(AF_INET, 
-                SOCK_STREAM | SOCK_NONBLOCK | SOCL_CLOEXEC, IPPROTO_TCP);
+                SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, IPPROTO_TCP);
     if (sockfd < 0)
     {
         CHIVE_LOG_ERROR("::socket create failed! sockfd %d", sockfd);
@@ -24,12 +24,11 @@ int createNonblocking()
     return sockfd;
 }
 
-}
 
 Acceptor::Acceptor(EventLoop* loop, const InetAddress& listenAddr, bool reuseport)
     : loop_ (loop),
-      accepSocket_ (sockets::createNonblocking()),
-      acceptChannel_ (loop, acceptSocket_.getFd()),
+      acceptSocket_ (createNonblocking()),
+      acceptChannel_ (loop, acceptSocket_.fd()),
       listening_ (false)
 {
     acceptSocket_.setReuseAddr(true);
@@ -49,7 +48,7 @@ void Acceptor::listen()
     loop_->assertInLoopThread();
     listening_ = true;
     acceptSocket_.listen();
-    acceptChannel_.enableReading():
+    acceptChannel_.enableReading();
 }
 
 void Acceptor::handleRead()
@@ -58,7 +57,7 @@ void Acceptor::handleRead()
 
     // 接收客户端连接，获取客户端信息
     InetAddress peerAddr;
-    int connfd = accepSocket_.accept(&peerAddr);
+    int connfd = acceptSocket_.accept(&peerAddr);
     if (connfd >= 0)
     {
         std::string hostport = peerAddr.toIpPort();
