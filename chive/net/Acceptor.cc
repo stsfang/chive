@@ -61,7 +61,8 @@ void Acceptor::handleRead()
     if (connfd >= 0)
     {
         std::string hostport = peerAddr.toIpPort();
-        CHIVE_LOG_DEBUG("accepts of %s", hostport);
+        CHIVE_LOG_DEBUG("listening socket %d accepts client addr %s", 
+                                    acceptSocket_.fd(), hostport.c_str());
 
         if (newConnCallback_)
         {
