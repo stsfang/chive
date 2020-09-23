@@ -11,5 +11,6 @@ cc_binary(
     extra_cppflags = [
         '-std=c++14',
 #        '-Wall',
+         '-g',
     ]
 )

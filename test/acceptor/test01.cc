@@ -12,25 +12,42 @@ using namespace chive;
 using namespace chive::net;
 
 
-void newConnection(int sockfd, const InetAddress& peerAddr)
+void newConnection1(int sockfd, const InetAddress& peerAddr)
 {
-    std::cout << "newConnection accepted a new connection from "
-                << peerAddr.toIpPort().c_str() 
-                << std::endl;
-    ::write(sockfd, "How are you?\n", 13);
+    CHIVE_LOG_INFO("newConnection accepted a new connection from %s",
+                                peerAddr.toIpPort().c_str());
+    const char* msg = "How are you?\n";
+    ::write(sockfd, msg, sizeof(msg));
+    ::close(sockfd);
+}
+
+void newConnection2(int sockfd, const InetAddress& peerAddr)
+{
+    CHIVE_LOG_INFO("newConnection accepted a new connection from %s",
+                                peerAddr.toIpPort().c_str());
+    const char* msg = "Are you ok?\n";
+    ::write(sockfd, msg, sizeof(msg));
     ::close(sockfd);
 }
 
 int main()
 {
-    std::cout << "main() pid = " << getpid() << std::endl;
+    CHIVE_LOG_INFO("main() pid = %d", getpid());
+    startLogPrint(NULL); // 
+    CHIVE_LOG_INFO("BEGIN");
 
-    InetAddress listenAddr(9909);
+    // port 1
+    InetAddress listenAddr1(9909);
+    // port 2
+    InetAddress listenAddr2(9908);
+
     EventLoop loop;
 
-    Acceptor acceptor(&loop, listenAddr);
-    acceptor.setNewConnectionCallback(newConnection);
-
-    acceptor.listen();
+    Acceptor acceptor1(&loop, listenAddr1);
+    Acceptor acceptor2(&loop, listenAddr2);
+    acceptor1.setNewConnectionCallback(newConnection1);
+    acceptor2.setNewConnectionCallback(newConnection2);
+    acceptor1.listen();
+    acceptor2.listen();
     loop.loop();
 }
