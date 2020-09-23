@@ -1,8 +1,10 @@
 #ifndef CHIVE_NET_ACCEPTOR_H
 #define CHIVE_NET_ACCEPTOR_H
 
-#include "chive/base/noncopyable.h"
 #include <functional>
+#include "chive/base/noncopyable.h"
+#include "chive/net/Channel.h"
+#include "chive/net/Socket.h"
 
 namespace chive
 {
@@ -12,12 +14,12 @@ namespace net
 class EventLoop;
 class InetAddress;
 
-class Acceptor : chive::noncopyable
+class Acceptor : noncopyable
 {
 public:
-    using NewConnectionCallback = function<void (int sockfd, const InetAddress&)>;
+    using NewConnectionCallback = std::function<void (int sockfd, const InetAddress&)>;
 
-    Acceptor(EventLoop* loop, const InetAddress& listenAddr);
+    Acceptor(EventLoop* loop, const InetAddress& listenAddr, bool reuseport = false);
     ~Acceptor();
 
     /**
@@ -34,9 +36,7 @@ public:
      * 设置新连接的回调函数
      */
     void setNewConnectionCallback(const NewConnectionCallback& cb)
-    {
-        newConnCallback_ = cb;
-    }
+    { newConnCallback_ = cb; }
 
 private:
     

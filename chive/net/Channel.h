@@ -3,7 +3,7 @@
 #include "chive/base/noncopyable.h"
 
 #include <functional>
-
+#include <memory>
 namespace chive
 {
 namespace net
@@ -36,6 +36,11 @@ public:
         errorCallback_ = cb;
     }
 
+    /**
+     * 绑定对象
+     */
+    void tie(const std::shared_ptr<void>&);
+
     int getFd() { return fd_;}
     int getEvents() { return events_;}
     void setRevents(int revts) { revents_ = revts; }
@@ -58,7 +63,28 @@ public:
         events_ |= kWriteEvent;
         update();
     }
-    // === FIXME: disable events? ===
+
+    /**
+     * 设置不可写，原因
+     * Epoll 采用 LT 模式，只需要在需要时关注写事件
+     * 否则socket fd一直可写会频繁唤醒IO线程造成busy loop
+     */
+    void disableWriting();
+
+    /**
+     * 设置全部事件不可用
+     */
+    void disableAll();
+
+    /**
+     * 是否正在写数据
+     */
+    bool isWriting();
+
+    /**
+     * 从EventLoop中移除该Channel
+     */
+    void remove();
 
     // === for poller ===
     int getIndex() {return index_; }
@@ -74,6 +100,12 @@ private:
      * 通过loop将fd及其事件更新到poller
      */
     void update();
+
+    /**
+     * handleEvent的核心
+     */
+    void handleEventWithGuard(Timer::Timestamp receiveTime);
+    
     /**
      * 事件编号,需要include POSIX头文件
      */
@@ -93,6 +125,11 @@ private:
     EventCallback readCallback_;
     EventCallback writeCallback_;
     EventCallback errorCallback_;
+
+    bool eventHanding_;                 /// 是否在处理事件
+    bool addedToLoop_;                  /// 是否添加到EventLoop中
+    std::weak_ptr<void> tie_;           /// 绑定对象
+    bool tied_;                         /// 是否绑定了对象
 };
 } // namespace net
 
