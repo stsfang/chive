@@ -12,7 +12,7 @@ namespace net
 class TcpConnection;
 using TcpConnectionPtr = std::shared_ptr<TcpConnection>;
 using ConnectionCallback = std::function<void (const TcpConnectionPtr&)>;
-using Timestamp = unit64_t;
+using Timestamp = uint64_t;
 /*
 using MessageCallback 
             = std::function<void (const TcpConnectionPtr&, void*, Timestamp)>;
@@ -20,7 +20,6 @@ using MessageCallback
 using MessageCallback = std::function<void (const TcpConnectionPtr&, char* buf, int len)>;
 
 
-using 
 } // namespace net
 
 } // namespace chive

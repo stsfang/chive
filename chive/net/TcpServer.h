@@ -2,6 +2,7 @@
 #define CHIVE_NET_TCPSERVER_H
 
 #include "chive/base/noncopyable.h"
+#include "chive/net/TcpConnection.h"
 
 #include <map>
 #include <memory>
@@ -17,10 +18,7 @@ class Acceptor;
 class TcpServer : noncopyable 
 {
 public:
-    using ConnectionCallback = std::function<void()>;
-    using MessageCallback = std::function<void()>;
-
-    TcpServer(EventLoop* loop, InetAddress& listenAddr);
+    TcpServer(EventLoop* loop, InetAddress& listenAddr, const std::string& name, bool reuseport = false);
     ~TcpServer();
 
     /**
@@ -30,12 +28,10 @@ public:
     void start();
 
     // -- 非线程安全 -- 
-    void setConnectionCallback(cont ConnectionCallback& cb)
-    { connectionCallback_ = cb; }
+    void setConnectionCallback(const ConnectionCallback& cb);
 
     // -- 非线程安全 --
-    void setMessageCallback(const MessageCallback& cb)
-    { messageCallback_ = cb; }
+    void setMessageCallback(const MessageCallback& cb);
 
 private:
     using ConnectionMap = std::map<std::string, TcpConnectionPtr>;
@@ -49,7 +45,7 @@ private:
     
     EventLoop* loop_;       // the acceptor loop
     const std::string name_;                /// the key of ConnectionMap
-    std::unique<Acceptor> acceptor_;        /// avoid revealing/exposing acceptor
+    std::unique_ptr<Acceptor> acceptor_;        /// avoid revealing/exposing acceptor
     ConnectionCallback connectionCallback_; /// 
     MessageCallback messageCallback_;       /// 
     bool started_;                          /// 

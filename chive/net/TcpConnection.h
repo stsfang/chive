@@ -3,7 +3,7 @@
 
 #include "chive/base/noncopyable.h"
 #include "chive/net/Callbacks.h"
-
+#include "chive/net/InetAddress.h"  // 用到了InetAddress实例
 
 #include <memory>
 #include <string>
@@ -19,22 +19,27 @@ class Channel;
 class EventLoop;
 class InetAddress;
 
-class TcpConnection : noncopyale, public std::enable_shared_from_this<TcpConnection>
+class TcpConnection : noncopyable, public std::enable_shared_from_this<TcpConnection>
 {
 public:
     TcpConnection(EventLoop* loop, 
-                  const string& name, 
+                  const std::string& name, 
                   int sockfd, 
                   const InetAddress& localAddr,
                   const InetAddress& peerAddr);
     ~TcpConnection();
 
+    void connectEstablished();
+
     EventLoop* getLoop() const { return loop_; }
-    const string& name() const { return name_; }
+    const std::string& name() const { return name_; }
     const InetAddress& localAddress() const { return localAddr_; }
     const InetAddress& peerAddress() const { return peerAddr_; }
     bool isConnected() const { return state_ == kConnected; }
     // bool isDisConnected() const { return state_ == kDisconnected; }
+
+    void setConnectionCallback(const ConnectionCallback& cb) { connectionCallback_ = cb; }
+    void setMessageCallback(const MessageCallback& cb) { messageCallback_ = cb; }
 private:
     // TcpConnection 状态
     // 初始化状态即为 connecting
