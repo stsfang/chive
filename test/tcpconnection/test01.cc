@@ -25,8 +25,8 @@ void onConnection(const TcpConnectionPtr& conn)
 
 void onMessage(const TcpConnectionPtr& conn, const char* data, ssize_t len)
 {
-    CHIVE_LOG_DEBUG("receive %d bytes from connection %s",
-                            len, conn->name().c_str());
+    CHIVE_LOG_DEBUG("receive %d bytes  from connection %s",
+                            len,  conn->name().c_str());
 }
 
 int main()
@@ -35,8 +35,8 @@ int main()
     InetAddress listenAddr(9909);
     EventLoop loop;
 
-    TcpServer server(&loop, listenAddr);
-    server.setConnectionCallback(onConnection):
+    TcpServer server(&loop, listenAddr, "chive_tcpserver");
+    server.setConnectionCallback(onConnection);
     server.setMessageCallback(onMessage);
     server.start();
 
