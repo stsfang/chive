@@ -4,11 +4,11 @@
 //外部变量定义
 LevelInfoSet g_logLvInfo[CDebugLevel::MAXLV] = {
     {1, "[DEBUG]"},
-    {1, "[INFO]"},
-    {1, "[WARN]"},
+    {1, " [INFO]"},
+    {1, " [WARN]"},
     {1, "[ERROR]"},
-    {1, "[NONE]"},
-    {1, "[VERB]"},
+    {1, " [NONE]"},
+    {1, " [VERB]"},
 };
 
 // 静态全局日志上下文
@@ -38,6 +38,18 @@ static pthread_mutex_t newfileMutex = PTHREAD_MUTEX_INITIALIZER;
 
 void writeToConsole(const char* logLine) {
     printf("%s\n", logLine);
+}
+
+const char* getFileName(const char* filepath) {
+    // C 库函数 char *strrchr(const char *str, int c) 
+    // 在参数 str 所指向的字符串中搜索最后一次出现字符 c（一个无符号字符）的位置
+    const char* filename = strrchr(filepath, static_cast<int>('/'));
+    if( NULL != filename) {
+        filename += 1;  // 后移一个位置才是文件名开头
+    } else {
+        filename = filepath;
+    }
+    return filename;
 }
 
 void logDebugPrint(char const * module, CDebugLevel level, char const * pFormat, ...) {

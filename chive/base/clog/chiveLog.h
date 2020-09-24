@@ -67,7 +67,7 @@ extern LevelInfoSet g_logLvInfo[CDebugLevel::MAXLV];
 #define CHIVE_LOG(module, level, levelString, fmt, args...) \
     if(g_logLvInfo[level].group_enable ) {                       \
         char format[MAX_BUFFER_SIZE];                                   \
-        sprintf(format, "%s %s:%d %s() %s", levelString, __FILE__, __LINE__, __FUNCTION__, fmt); \
+        sprintf(format, "%s %s:%d %s() %s", levelString, getFileName(__FILE__), __LINE__, __FUNCTION__, fmt); \
         logDebugPrint(  \
             (module),   \
             level,      \
@@ -91,6 +91,8 @@ extern LevelInfoSet g_logLvInfo[CDebugLevel::MAXLV];
 bool createLogDir(const char *path);
 
 void writeToConsole(const char* logLine);
+
+const char* getFileName(const char* filepath);
 /**
  * 日志打印核心函数
  */
