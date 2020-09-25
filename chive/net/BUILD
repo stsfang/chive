@@ -15,5 +15,10 @@ cc_library(
     ],
     deps = [
    #     '//chive/net/poller/:chive_net_poller'
+    ],
+    extra_cppflags = [
+        '-std=c++14',
+#        '-Wall',
+         '-g',
     ]
 )

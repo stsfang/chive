@@ -30,7 +30,7 @@ EPollPoller::EPollPoller(EventLoop* loop)
     {
         CHIVE_LOG_ERROR("create epollfd failed!, epollfd_ %d", epollfd_);
     }
-    CHIVE_LOG_DEBUG("epoller created.")
+    CHIVE_LOG_DEBUG("created epoller %p with epollfd %d", this, epollfd_);
 }
 
 EPollPoller::~EPollPoller()
@@ -41,8 +41,8 @@ EPollPoller::~EPollPoller()
 
 Timestamp EPollPoller::poll(int timeoutMs, ChannelList* activeChannels)
 {
-    CHIVE_LOG_DEBUG("epoller begins polling...");
-    CHIVE_LOG_DEBUG("registerd channels total number %d", channels_.size());
+    CHIVE_LOG_DEBUG("epoller %p begins polling...", this);
+    CHIVE_LOG_DEBUG("epoller %p now registerd channels total number %d", this, channels_.size());
     // 开始监听epollfd
     int numEvents = ::epoll_wait(epollfd_,
                                  /*&*events_.begin(),*/
@@ -54,7 +54,7 @@ Timestamp EPollPoller::poll(int timeoutMs, ChannelList* activeChannels)
     if (numEvents > 0)
     {
         // 填充活跃的channel
-        CHIVE_LOG_INFO("active event number %d", numEvents);
+        CHIVE_LOG_INFO("epoller %p get active event number %d", this, numEvents);
         fillActiveChannels(numEvents, activeChannels);
 
         // 如果注册的event达到了events_的容量，需要给events_扩容
@@ -68,11 +68,11 @@ Timestamp EPollPoller::poll(int timeoutMs, ChannelList* activeChannels)
     }
     else if (numEvents == 0)
     {
-        CHIVE_LOG_DEBUG("didn't get any active channel");
+        CHIVE_LOG_DEBUG("epoller %p didn't get any active channel", this);
     }
     else 
     {
-        CHIVE_LOG_ERROR("some err happened, erron %s",strerror(errno));
+        CHIVE_LOG_ERROR("epoller %p get some err happened, erron %s", this, strerror(errno));
         errno = savedErrno;     /// 将本地的errno写回全局errno
                                 /// FIXME: 是否增加errno的handler
     }
@@ -83,7 +83,7 @@ void EPollPoller::updateChannel(Channel* channel)
 {
     Poller::assertInLoopThread();   // 调用基类方法
     const int index = channel->getIndex();  // channel.index_ 初始 -1
-    CHIVE_LOG_DEBUG("fd = %d events = %d index = %d",
+    CHIVE_LOG_DEBUG("fd = %d events = %d status = %d",
                         channel->getFd(), channel->getEvents(), index);
 
     if(index == kNew || index == kDeleted)
@@ -125,15 +125,16 @@ void EPollPoller::removeChannel(Channel* channel)
 {
     Poller::assertInLoopThread();
     int fd = channel->getFd();
-    CHIVE_LOG_DEBUG("remove fd = %d", fd);
+    CHIVE_LOG_DEBUG("poller %p remove channel %p with socket fd = %d", 
+                            this, channel, fd);
     assert(channels_.find(fd) != channels_.end());
     assert(channels_[fd] == channel);
     assert(channel->isNoneEvent());
 
     int index = channel->getIndex();
     assert(index == kAdded || index == kDeleted);
-    size_t n = channels_.erase(fd); (void)n;
-    assert(n == 1);
+    size_t n = channels_.erase(fd); 
+    assert(n == 1); (void)n;
 
     if (index == kAdded)
     {

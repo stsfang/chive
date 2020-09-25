@@ -27,9 +27,10 @@ int createEventfd()
     int evtfd = ::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
     if (evtfd < 0)
     {
-        CHIVE_LOG_DEBUG("Abort since creating eventfd failed! evtfd %d", evtfd);
+        CHIVE_LOG_ERROR("Abort since creating eventfd failed! evtfd %d", evtfd);
         abort();    //中断程序
     }
+    CHIVE_LOG_DEBUG("created event fd %d", evtfd);
     return evtfd;
 }
 
@@ -51,7 +52,7 @@ EventLoop::EventLoop():
     wakeupChannel_(new Channel(this, wakeupFd_)),
     timerQueue_(new TimerQueue(this))
 {
-    CHIVE_LOG_DEBUG("EventLoop created %p in thread %d", this, threadId_);
+    CHIVE_LOG_DEBUG("created EventLoop %p in thread %d", this, threadId_);
     if(t_loopInThisThread)
     {
         CHIVE_LOG_ERROR("Another EventLoop %p exits in this thread %d",
@@ -95,8 +96,9 @@ void EventLoop::loop()
     while(!quit_)
     {
         activeChannels_.clear();
-        poller_->poll(kPollTimeMs, &activeChannels_);
-        CHIVE_LOG_DEBUG("trace in loop");
+        auto now = poller_->poll(kPollTimeMs, &activeChannels_);
+        CHIVE_LOG_DEBUG("eventloop %p polls from poller %p now %ld",    
+                                this, poller_.get(), now);
         for(ChannelList::iterator it = activeChannels_.begin();
             it != activeChannels_.end(); it++)
         {
@@ -118,12 +120,18 @@ void EventLoop::updateChannel(Channel* channel)
 
 void EventLoop::removeChannel(Channel* channel)
 {
+    CHIVE_LOG_DEBUG("inform poller %p to remove channel %p",
+                    poller_.get(), channel);
     assert(channel->ownerLoop() == this);
     assertInLoopThread();
+    poller_->removeChannel(channel);
+}
 
-    // FIXME: poller未实现
-    // poller_->removeChannel(channel);
-    CHIVE_LOG_DEBUG("poller has not implement removeChannel yet");
+bool EventLoop::hasChannel(Channel* channel) 
+{
+    assert(channel->getOwnerLoop() == this);
+    assertInLoopThread();
+    return poller_->hasChannel(channel);
 }
 
 //FIXME: 是否中断程序执行？

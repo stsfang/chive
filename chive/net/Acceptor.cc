@@ -31,6 +31,8 @@ Acceptor::Acceptor(EventLoop* loop, const InetAddress& listenAddr, bool reusepor
       acceptChannel_ (loop, acceptSocket_.fd()),
       listening_ (false)
 {
+    CHIVE_LOG_DEBUG("created acceptor %p with socket %d channel %p in eventloop %p",  
+                     this, acceptSocket_.fd(), &acceptChannel_, loop);
     acceptSocket_.setReuseAddr(true);
     acceptSocket_.bindAddress(listenAddr);
     acceptChannel_.setReadCallback(std::bind(&Acceptor::handleRead, this));
@@ -61,8 +63,8 @@ void Acceptor::handleRead()
     if (connfd >= 0)
     {
         std::string hostport = peerAddr.toIpPort();
-        CHIVE_LOG_DEBUG("listening socket %d accepts client addr %s", 
-                                    acceptSocket_.fd(), hostport.c_str());
+        CHIVE_LOG_DEBUG("listening socket %d accepts client addr %s in connfd %d", 
+                                    acceptSocket_.fd(), hostport.c_str(), connfd);
 
         if (newConnCallback_)
         {

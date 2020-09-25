@@ -31,6 +31,7 @@ int createTimerfd()
   {
     CHIVE_LOG_ERROR("timerfd_create failed! timerfd %d", timerfd);
   }
+  CHIVE_LOG_ERROR("created timerfd %d", timerfd);
   return timerfd;
 }
 

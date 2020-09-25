@@ -43,6 +43,8 @@ private:
      */
     void newConnection(int sockfd, const InetAddress& peerAddr);
     
+    void removeConnection(const TcpConnectionPtr& conn);
+    
     EventLoop* loop_;       // the acceptor loop
     const std::string name_;                /// the key of ConnectionMap
     std::unique_ptr<Acceptor> acceptor_;        /// avoid revealing/exposing acceptor

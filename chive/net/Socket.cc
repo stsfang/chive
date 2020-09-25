@@ -20,7 +20,7 @@ Socket::~Socket()
 {
     if(isValid())   /// sockfd_ >= 0才能close
     {
-        CHIVE_LOG_DEBUG("close socket fd %d", sockfd_);
+        CHIVE_LOG_DEBUG("close socket %p with fd %d", this, sockfd_);
         ::close(sockfd_);
     }
 }

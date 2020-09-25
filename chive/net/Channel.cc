@@ -1,5 +1,6 @@
 #include "chive/net/Channel.h"
 #include "chive/net/EventLoop.h"
+#include "chive/base/clog/chiveLog.h"
 
 #include <sys/poll.h>
 
@@ -21,16 +22,18 @@ Channel::Channel(EventLoop *evloop, int fd) : loop_(evloop),
                                               tied_(false)
 
 {
+    CHIVE_LOG_DEBUG("created channel %p with fd %d in eventloop %p", this, fd, evloop);
 }
 
 Channel::~Channel()
 {
-    assert(!eventHanding_);
-    assert(!addedToLoop_);
+    assert(!eventHanding_);         // 正在处理事件 不能析构
+    assert(!addedToLoop_);          // 没被添加到loop 不能析构
     if (loop_->isInLoopThread())
     {
         assert(!loop_->hasChannel(this));
     }
+    CHIVE_LOG_DEBUG("destroyed channel %p with socket fd %d", this, fd_);
 }
 
 void Channel::tie(const std::shared_ptr<void>& obj)
@@ -46,6 +49,8 @@ void Channel::update()
 
 void Channel::handleEvent()
 {
+    CHIVE_LOG_DEBUG("channel %p handle events", this);
+    eventHanding_ = true;           //标志置位 正在处理事件
     std::shared_ptr<void> guard;
     if (tied_)
     {
@@ -59,10 +64,17 @@ void Channel::handleEvent()
     {
         handleEventWithGuard(0);
     }
+    eventHanding_ = false;      //标志复位 退出处理事件
 }
 
 void Channel::handleEventWithGuard(Timestamp receiveTime)
 {
+    if ((revents_ & POLLHUP) && !(revents_ & POLLIN))
+    {
+        CHIVE_LOG_WARN("POLLHUP event");
+        if (closeCallback_) 
+            closeCallback_();
+    }
     if (revents_ & (POLLERR | POLLNVAL))
     {
         if (errorCallback_)

@@ -18,7 +18,7 @@ using MessageCallback
             = std::function<void (const TcpConnectionPtr&, void*, Timestamp)>;
 */
 using MessageCallback = std::function<void (const TcpConnectionPtr&, char* buf, int len)>;
-
+using CloseCallback = std::function<void(const TcpConnectionPtr&)>;
 
 } // namespace net
 

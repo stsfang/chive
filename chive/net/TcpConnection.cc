@@ -30,16 +30,47 @@ TcpConnection::TcpConnection(EventLoop* loop,
 
 TcpConnection::~TcpConnection()
 {
-    CHIVE_LOG_DEBUG("tcp connection %p closed", this);
+    CHIVE_LOG_DEBUG("disconnected tcp connection %p with channel %p socket %p fd %d", 
+                                this, channel_.get(), socket_.get(), socket_->fd());
 }
 
 void TcpConnection::handleRead()
 {
-    CHIVE_LOG_DEBUG("tcp connection %p handle read", this);
+    CHIVE_LOG_DEBUG("tcp connection %p handle read from connfd %d", 
+                        this, channel_->getFd());
     char buf[65536];
     ssize_t n = ::read(channel_->getFd(), buf, sizeof(buf));
-    messageCallback_(shared_from_this(), buf, n);
-    ///FIXME: close connection if n == 0
+    if ( n > 0)
+    {
+        messageCallback_(shared_from_this(), buf, n);
+    }
+    else if (n == 0)
+    {
+        handleClose();
+    }
+    else 
+    {
+        handleError();
+    }
+}
+
+void TcpConnection::handleClose()
+{
+    loop_->assertInLoopThread();
+    CHIVE_LOG_DEBUG("client disconnected now state %d in connfd %d", 
+                        state_, channel_->getFd());
+    assert(state_ == kConnected);
+    // 只是移除fd上全部事件，没有close掉fd
+    // 目的:便于发现泄露 -- from muduo 
+    channel_->disableAll();     
+    closeCallback_(shared_from_this());
+}
+
+void TcpConnection::handleError()
+{
+    int err = socket_->getSocketError();
+    CHIVE_LOG_ERROR("tcp connection %p [ name: ] - SO_ERROR %d",
+                        this, name_.c_str(), err);
 }
 
 void TcpConnection::connectEstablished()
@@ -54,4 +85,17 @@ void TcpConnection::connectEstablished()
   //连接建立完成,回调
   connectionCallback_(shared_from_this());
   CHIVE_LOG_DEBUG("tcp connection %p established connection", this);
+}
+
+void TcpConnection::connectDestroyed()
+{
+    CHIVE_LOG_DEBUG("tcp connection %p desctroyed", this);
+    loop_->assertInLoopThread();
+    assert(state_ == kConnected);
+    setState(kDisconnected);
+    channel_->disableAll();
+    
+    connectionCallback_(shared_from_this());
+
+    loop_->removeChannel(channel_.get());
 }

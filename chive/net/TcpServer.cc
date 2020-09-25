@@ -9,6 +9,7 @@
 
 using namespace chive;
 using namespace chive::net;
+using namespace std::placeholders;        // function对象占位符
 
 void defaltConnectionCallback(const TcpConnectionPtr& conn)
 {
@@ -37,9 +38,9 @@ TcpServer::TcpServer(EventLoop* loop, InetAddress& listenAddr, const std::string
       started_ (false),
       nextConnId_(1)
 {
-    CHIVE_LOG_DEBUG("tcpserver %p created", this);
+    CHIVE_LOG_DEBUG("created tcpserver %p", this);
     acceptor_->setNewConnectionCallback(
-        std::bind(&TcpServer::newConnection, this, std::placeholders::_1, std::placeholders::_2));
+        std::bind(&TcpServer::newConnection, this, _1, _2));
 }
 
 TcpServer::~TcpServer()
@@ -51,11 +52,12 @@ void TcpServer::start()
 {
     if (!started_)
     {
+        CHIVE_LOG_DEBUG("start tcpserver %p acceptor %p listenfd run in eventloop %p", 
+                            this, acceptor_.get(), loop_);
         assert(!acceptor_->listening());
+        // 在IO线程进行监听
         loop_->runInLoop(
             std::bind(&Acceptor::listen, acceptor_.get()));
-        CHIVE_LOG_DEBUG("start tcpserver %p eventloop %p acceptor %p", 
-                            this, loop_, acceptor_.get());
     }
 }
 
@@ -89,5 +91,18 @@ void TcpServer::newConnection(int sockfd, const InetAddress& peerAddr)
     connections_[connName] = conn;
     conn->setConnectionCallback(connectionCallback_);
     conn->setMessageCallback(messageCallback_);
+    conn->setCloseCallback(
+        std::bind(&TcpServer::removeConnection, this, _1));
     conn->connectEstablished();
+}
+
+void TcpServer::removeConnection(const TcpConnectionPtr& conn)
+{
+    loop_->assertInLoopThread();
+    CHIVE_LOG_INFO("remove connection %p named %d", 
+                    conn.get(), conn->name().c_str());
+    size_t n = connections_.erase(conn->name());
+    assert(n == 1); (void)n;
+    loop_->queueInLoop(
+        std::bind(&TcpConnection::connectDestroyed, conn));
 }

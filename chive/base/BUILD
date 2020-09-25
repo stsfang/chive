@@ -8,5 +8,5 @@ cc_library(
     deps = [
         '#pthread',
         '//chive/base/clog/:chive_log'
-    ]
+    ],
 )

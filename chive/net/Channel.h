@@ -34,6 +34,9 @@ public:
     void setErrorCallback(const EventCallback& cb) {
         errorCallback_ = cb;
     }
+    void setCloseCallback(const EventCallback& cb) {
+        closeCallback_ = cb;
+    }
 
     /**
      * 绑定对象
@@ -125,6 +128,7 @@ private:
     EventCallback readCallback_;
     EventCallback writeCallback_;
     EventCallback errorCallback_;
+    EventCallback closeCallback_;
 
     bool eventHanding_;                 /// 是否在处理事件
     bool addedToLoop_;                  /// 是否添加到EventLoop中
