@@ -23,10 +23,11 @@ void onConnection(const TcpConnectionPtr& conn)
     }
 }
 
-void onMessage(const TcpConnectionPtr& conn, const char* data, ssize_t len)
+void onMessage(const TcpConnectionPtr& conn, Buffer* buf, Timestamp receiveTime)
 {
-    CHIVE_LOG_DEBUG("receive %d bytes from connection %s data %s",
-                            len,  conn->name().c_str(), data);
+    CHIVE_LOG_DEBUG("receive %d bytes from connection %s timestamp %ld",
+                            buf->readableBytes(), conn->name().c_str(), receiveTime);
+    CHIVE_LOG_INFO("receive data %s", buf->retrieveAllAsString().c_str());
 }
 
 int main()
