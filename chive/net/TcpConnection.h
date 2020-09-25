@@ -4,6 +4,7 @@
 #include "chive/base/noncopyable.h"
 #include "chive/net/Callbacks.h"
 #include "chive/net/InetAddress.h"  // 用到了InetAddress实例
+#include "chive/net/Buffer.h"
 
 #include <memory>
 #include <string>
@@ -66,7 +67,7 @@ private:
     void setState(StateE s) { state_ = s; }
 
     // 事件处理
-    void handleRead();
+    void handleRead(Timestamp receiveTime);
     void handleWrite();
     void handleClose();
     void handleError();
@@ -82,6 +83,8 @@ private:
     ConnectionCallback connectionCallback_;
     MessageCallback messageCallback_;
     CloseCallback closeCallback_;
+
+    Buffer inputBuffer_;
 };
 } // namespace net
 

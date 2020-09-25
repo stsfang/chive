@@ -12,6 +12,7 @@ cc_library(
         'InetAddress.cc',
         'TcpConnection.cc',
         'TcpServer.cc',
+        'Buffer.cc',
     ],
     deps = [
    #     '//chive/net/poller/:chive_net_poller'

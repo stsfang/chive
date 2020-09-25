@@ -102,7 +102,7 @@ void EventLoop::loop()
         for(ChannelList::iterator it = activeChannels_.begin();
             it != activeChannels_.end(); it++)
         {
-            (*it)->handleEvent();
+            (*it)->handleEvent(now);
         }
         // 每次从poll中监听到事件时，检查是否有pendingFunctors待处理
         doPendingFunctors();

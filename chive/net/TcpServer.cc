@@ -19,13 +19,13 @@ void defaltConnectionCallback(const TcpConnectionPtr& conn)
                             (conn->isConnected()? "Up" : "Down"));
 }
 
-void defaltMessageCallback(const TcpConnectionPtr& conn, char* buf, int len)
+void defaltMessageCallback(const TcpConnectionPtr& conn, Buffer* buf, Timestamp receiveTime)
 {
     CHIVE_LOG_DEBUG("connection localAddr %s peerAddr %s connected state %s received data %s", 
                             conn->localAddress().toIpPort().c_str(),
                             conn->peerAddress().toIpPort().c_str(), 
                             (conn->isConnected()? "Up" : "Down"),
-                            buf);
+                            buf->retrieveAllAsString().c_str());
            
 }
 

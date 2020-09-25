@@ -47,7 +47,7 @@ void Channel::update()
     loop_->updateChannel(this);
 }
 
-void Channel::handleEvent()
+void Channel::handleEvent(Timestamp receiveTime)
 {
     CHIVE_LOG_DEBUG("channel %p handle events", this);
     eventHanding_ = true;           //标志置位 正在处理事件
@@ -57,12 +57,12 @@ void Channel::handleEvent()
         guard = tie_.lock();
         if (guard)
         {
-            handleEventWithGuard(0);
+            handleEventWithGuard(receiveTime);
         }
     }
     else 
     {
-        handleEventWithGuard(0);
+        handleEventWithGuard(receiveTime);
     }
     eventHanding_ = false;      //标志复位 退出处理事件
 }
@@ -83,7 +83,7 @@ void Channel::handleEventWithGuard(Timestamp receiveTime)
     if (revents_ & (POLLIN | POLLPRI | POLLRDHUP))
     {
         if (readCallback_)
-            readCallback_();
+            readCallback_(receiveTime);
     }
     if (revents_ & POLLOUT)
     {

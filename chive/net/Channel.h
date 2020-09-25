@@ -12,7 +12,9 @@ class EventLoop;
 class Channel: noncopyable 
 {
 public:
+    using Timestamp = uint64_t;
     using EventCallback = std::function<void()>;
+    using ReadEventCallback = std::function<void(Timestamp)>;
 
     Channel(EventLoop* evloop, int fd);
     ~Channel();
@@ -20,12 +22,12 @@ public:
     /**
      * channel核心，根据不同的revents值调用对应的回调函数
      */
-    void handleEvent();
+    void handleEvent(Timestamp receiveTime);
 
     /**
      * 设置回调函数
      */
-    void setReadCallback(const EventCallback& cb) {
+    void setReadCallback(const ReadEventCallback& cb) {
         readCallback_ = cb;
     }
     void setWriteCallback(const EventCallback& cb) {
@@ -98,7 +100,6 @@ public:
     EventLoop* getOwnerLoop() { return loop_; }
 
 private:
-    using Timestamp = uint64_t;
     /**
      * 通过loop将fd及其事件更新到poller
      */
@@ -125,7 +126,7 @@ private:
                 // if added, index_ >= 0
     
     // === callbacks ===
-    EventCallback readCallback_;
+    ReadEventCallback readCallback_;
     EventCallback writeCallback_;
     EventCallback errorCallback_;
     EventCallback closeCallback_;
