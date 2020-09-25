@@ -25,8 +25,8 @@ void onConnection(const TcpConnectionPtr& conn)
 
 void onMessage(const TcpConnectionPtr& conn, const char* data, ssize_t len)
 {
-    CHIVE_LOG_DEBUG("receive %d bytes  from connection %s",
-                            len,  conn->name().c_str());
+    CHIVE_LOG_DEBUG("receive %d bytes from connection %s data %s",
+                            len,  conn->name().c_str(), data);
 }
 
 int main()
