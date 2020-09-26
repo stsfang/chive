@@ -33,6 +33,8 @@ public:
     // -- 非线程安全 --
     void setMessageCallback(const MessageCallback& cb);
 
+    void setWriteCompleteCallback(const WriteCompleteCallback& cb);
+
 private:
     using ConnectionMap = std::map<std::string, TcpConnectionPtr>;
 
@@ -50,6 +52,7 @@ private:
     std::unique_ptr<Acceptor> acceptor_;        /// avoid revealing/exposing acceptor
     ConnectionCallback connectionCallback_; /// 
     MessageCallback messageCallback_;       /// 
+    WriteCompleteCallback writeCompleteCallback_;
     bool started_;                          /// 
     int nextConnId_;                        /// 
     ConnectionMap connections_;             /// 

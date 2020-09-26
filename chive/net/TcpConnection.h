@@ -58,6 +58,7 @@ public:
     void setConnectionCallback(const ConnectionCallback& cb) { connectionCallback_ = cb; }
     void setMessageCallback(const MessageCallback& cb) { messageCallback_ = cb; }
     void setCloseCallback(const CloseCallback& cb) { closeCallback_ = cb; }
+    void setWriteCompleteCallback(const WriteCompleteCallback& cb) { writeCompleteCallback_ = cb; }
 private:
     // TcpConnection 状态 (tcp connection的状态转移)
     // 初始化状态即为 connecting

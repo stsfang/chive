@@ -7,11 +7,20 @@
 using namespace chive;
 using namespace chive::net;
 
+static std::string msg1 = std::string("huhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh")
+                        + std::string("llllllllllllllllllllllllllllllllllllllllllllllllllll")
+                        + std::string("huuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu");
+
+static std::string msg2 = "hello world";
+
 void onConnection(const TcpConnectionPtr& conn) {
     if (conn->isConnected()) {
         CHIVE_LOG_DEBUG("new connection [%s] from %s",
                             conn->name().c_str(),
                             conn->peerAddress().toIpPort().c_str());
+        conn->send(msg1);
+        conn->send(msg2);
+        // conn->shutdown();
     } else {
         CHIVE_LOG_WARN("connecion [%s] is down", conn->name().c_str());
     }
@@ -25,6 +34,10 @@ void onMessage(const TcpConnectionPtr& conn, Buffer* buf, Timestamp receiveTime)
     conn->send(buf->retrieveAllAsString());
 }
 
+void onWriteComplege(const TcpConnectionPtr& conn) {
+    conn->send("all sent, bye!");
+}
+
 int main() {
     startLogPrint(NULL);
 
@@ -35,6 +48,7 @@ int main() {
     TcpServer server(&loop, listenAddr, "chive_echoserver");
     server.setConnectionCallback(onConnection);
     server.setMessageCallback(onMessage);
+    server.setWriteCompleteCallback(onWriteComplege);
     server.start();
 
     loop.loop();

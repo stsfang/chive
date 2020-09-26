@@ -73,6 +73,12 @@ void TcpServer::setMessageCallback(const MessageCallback& cb)
     messageCallback_ = cb;
 }
 
+void TcpServer::setWriteCompleteCallback(const WriteCompleteCallback& cb)
+{
+    CHIVE_LOG_DEBUG("set write complete callback for tcpserver %p", this);
+    writeCompleteCallback_ = cb;  
+}
+
 void TcpServer::newConnection(int sockfd, const InetAddress& peerAddr)
 {
     loop_->assertInLoopThread();
@@ -93,6 +99,7 @@ void TcpServer::newConnection(int sockfd, const InetAddress& peerAddr)
     conn->setMessageCallback(messageCallback_);
     conn->setCloseCallback(
         std::bind(&TcpServer::removeConnection, this, _1));
+    conn->setWriteCompleteCallback(writeCompleteCallback_);
     conn->connectEstablished();
 }
 
