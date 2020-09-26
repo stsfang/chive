@@ -57,16 +57,62 @@ void TcpConnection::handleRead(Timestamp receiveTime)
     }
 }
 
+void TcpConnection::handleWrite()
+{
+    loop_->assertInLoopThread();
+    if (channel_->isWriting())
+    {
+        ssize_t n = ::write(socket_->fd(), 
+                            outputBuffer_.peek(), 
+                            outputBuffer_.readableBytes());
+        if (n > 0) {
+            outputBuffer_.retrieve(static_cast<size_t>(n));
+            if (outputBuffer_.readableBytes() == 0) {
+                // 发送完毕，移除可写事件，防止busy-loop
+                channel_->disableWriting();     
+                // 执行写完的回调
+                if (writeCompleteCallback_) {
+                    loop_->queueInLoop(
+                        std::bind(writeCompleteCallback_, shared_from_this()));
+                }
+                // 正在执行关闭，则调用shutdownInLoop()继续执行关闭过程
+                if (state_ == kDisconnecting) {
+                    shutdownInLoop();
+                }
+            } else {
+                CHIVE_LOG_INFO("tcp connection %p socket %d need write more data",
+                                    this, socket_->fd());
+            }
+        }
+        else {
+            // int savedErrno = errno;
+            /// NOTE: 不需要处理错误
+            /// 如果发生n==0,那么handleRead会读到0字节，继而关闭连接 --- from muduo
+            /// FIXME: handleRead会读到0字节？
+            CHIVE_LOG_ERROR("tcp connection %p write to socket %d error", 
+                                    this, socket_->fd());
+        }
+    }
+    else
+    {
+        CHIVE_LOG_INFO("tcp connection %p is down, no more writing", this);
+    }
+}
+
 void TcpConnection::handleClose()
 {
     loop_->assertInLoopThread();
     CHIVE_LOG_DEBUG("client disconnected now state %d in connfd %d", 
                         state_, channel_->getFd());
-    assert(state_ == kConnected);
-    // 只是移除fd上全部事件，没有close掉fd
-    // 目的:便于发现泄露 -- from muduo 
+    assert(state_ == kConnected || state_ == kDisconnecting);
+    setState(kDisconnected);
+    // 只是移除fd上全部事件，没有close掉fd, 让Socket对象自己析构
+    // 目的:便于定位内存泄露 -- from muduo 
     channel_->disableAll();     
-    closeCallback_(shared_from_this());
+    if (closeCallback_) {
+        // 回调 TcpServer::removeConnection
+        closeCallback_(shared_from_this());
+    }
 }
 
 void TcpConnection::handleError()
@@ -94,13 +140,103 @@ void TcpConnection::connectDestroyed()
 {
     CHIVE_LOG_DEBUG("tcp connection %p desctroyed", this);
     loop_->assertInLoopThread();
-    assert(state_ == kConnected);
+    assert(state_ == kConnected || state_ == kDisconnected);
     setState(kDisconnected);
     channel_->disableAll();
     
     /// FIXME:
     /// 使用disconnectedCallback 而不是 connectionCallback
-    connectionCallback_(shared_from_this());
+    if(connectionCallback_)
+        connectionCallback_(shared_from_this());
 
     loop_->removeChannel(channel_.get());
+}
+
+
+void TcpConnection::send(const std::string& message)
+{
+    if (state_ == kConnected)
+    {
+        if (loop_->isInLoopThread()) {
+            sendInLoop(message);
+        } else {
+            /// NOTE: 因为sendInLoop有重载，所以需要指出函数指针类型
+            /// ref:https://www.cnblogs.com/and_swordday/p/4643975.html
+            void (TcpConnection::*fp)(const std::string& message) = &TcpConnection::sendInLoop;
+            loop_->runInLoop(
+                std::bind(fp, this, message));
+        }
+    }
+}
+
+void TcpConnection::send(const void* message, size_t len)
+{
+
+}
+
+void TcpConnection::shutdown()
+{
+    if (state_ == kConnected)
+    {
+        setState(kDisconnecting);   // 关闭写入端
+        loop_->runInLoop(
+            ///NOTE: 使用shared_from_this() 而不是 this 
+            std::bind(&TcpConnection::shutdownInLoop, shared_from_this()));
+    }
+}
+
+void TcpConnection::sendInLoop(const std::string& message)
+{
+    sendInLoop(message.data(), message.size());
+}
+
+void TcpConnection::sendInLoop(const void* data,  size_t len)
+{
+    loop_->assertInLoopThread();
+    ssize_t nwrote = 0;
+    size_t remaining = len;
+    // 1. 先检查outputBuffer_ 有没有未发送的数据, 如无则直接写
+    if (!channel_->isWriting() && outputBuffer_.readableBytes() == 0)
+    {
+        nwrote = ::write(socket_->fd(), data, len);
+        if (nwrote >= 0) {
+            remaining = len - nwrote;
+            if (remaining == 0 && writeCompleteCallback_) {
+                ///NOTE: 不是runInLoop, 因为发送完毕的回调不需要实时
+                loop_->queueInLoop(
+                    std::bind(writeCompleteCallback_, shared_from_this()));
+            }
+        } else {
+            nwrote = 0;
+            if (errno != EWOULDBLOCK) {
+                CHIVE_LOG_ERROR("tcpconn %p write to socket %d failed, errno %d",
+                            this, channel_->getFd(), errno);
+                /// FIXME: any other error??
+            }
+        }
+    }
+
+    // 如果channel处于写事件状态或者outputBuffer_上有未发送的数据
+    // 那么当前数据发送的任务需要排队, 以防数据乱序
+    // 解决方案: 开启channel上的写事件
+    assert(remaining <= len);
+    if (remaining > 0) 
+    {
+        outputBuffer_.append(static_cast<const char*>(data) + nwrote, remaining);
+        if (!channel_->isWriting()) {
+            channel_->enableWriting();
+        }
+    }
+}
+
+
+void TcpConnection::shutdownInLoop()
+{
+    loop_->assertInLoopThread();
+    // 如果channel上没有写事件发生才能shutdown
+    // 否则会丢失写事件
+    if (!channel_->isWriting())
+    {
+        socket_->shutdownWrite();
+    }
 }

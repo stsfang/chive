@@ -21,7 +21,7 @@ using MessageCallback
 */
 using MessageCallback = std::function<void (const TcpConnectionPtr&, Buffer* buf, Timestamp now)>;
 using CloseCallback = std::function<void(const TcpConnectionPtr&)>;
-
+using WriteCompleteCallback = std::function<void(const TcpConnectionPtr&)>;
 } // namespace net
 
 } // namespace chive
