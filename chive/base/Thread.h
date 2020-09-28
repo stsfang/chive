@@ -38,10 +38,6 @@ public:
 
     static pid_t gettid();
 
-    void CountDown()
-    {
-        latch_.countDown();
-    }
 private:
     void setDefaultName();
 

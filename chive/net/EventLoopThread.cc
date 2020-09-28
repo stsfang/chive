@@ -34,13 +34,14 @@ EventLoop* EventLoopThread::startLoop()
 
     {
         MutexLockGuard lock(mutex_);
-        while (loop_ == NULL)
+        while (loop_ == nullptr)
         {
             cond_.wait();
         }
+        /// 临时用sleep规避一下
+        sleep(4);
     }
     CHIVE_LOG_DEBUG("return loop %p", loop_);
-    
     /// FIXME:
     // 在loop_返回之前必须完成了初始化
     return loop_;
@@ -49,9 +50,6 @@ EventLoop* EventLoopThread::startLoop()
 void EventLoopThread::threadFunc()
 {
     EventLoop loop; // stack obj
-    /// NOTE:
-    /// 利用latch，当EventLoop完成初始化后才能返回loop给主线程
-    thread_.CountDown();
 
     CHIVE_LOG_DEBUG("loop1 %p", &loop);
     if (callback_)
@@ -66,10 +64,7 @@ void EventLoopThread::threadFunc()
         cond_.notify();
     }
 
-    
     loop_->loop();
-    //sleep(100000);
-
     /// FIXME:是否必要?
     /// loop结束对loop_置空
     // MutexLockGuard lock(mutex_);

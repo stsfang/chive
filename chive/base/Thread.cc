@@ -86,6 +86,7 @@ void Thread::runInThread()
 {
     tid_ = Thread::gettid();
     CHIVE_LOG_DEBUG("latch down...");
+    latch_.countDown();
     try
     {
         func_();    // 执行注册给线程的函数
