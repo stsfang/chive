@@ -20,6 +20,8 @@ class Channel;
 class EventLoop;
 class InetAddress;
 
+static const int HIGH_WATER_MARK_SIZE = 64 * 1024 * 1024;
+
 class TcpConnection : noncopyable, public std::enable_shared_from_this<TcpConnection>
 {
 public:
@@ -55,10 +57,25 @@ public:
     // -- thread safe
     void shutdown();
 
+    /**
+     *  -- TCP keepalive
+     * 定期检查TCP连接是否还存在，如果应用层有做‘心跳’的话则不是必须的
+     * 但一个通用的网络库应该暴露其接口
+     */
+    void setKeepAlive(bool on);
+    /**
+     * -- TCP No Delay 对低延迟网络服务关键
+     * 禁用Nagle算法，避免连续发包出现延迟，
+     */
+    void setTcpNoDelay(bool on);
     void setConnectionCallback(const ConnectionCallback& cb) { connectionCallback_ = cb; }
     void setMessageCallback(const MessageCallback& cb) { messageCallback_ = cb; }
     void setCloseCallback(const CloseCallback& cb) { closeCallback_ = cb; }
+    // ‘低水位回调’
     void setWriteCompleteCallback(const WriteCompleteCallback& cb) { writeCompleteCallback_ = cb; }
+    // ‘高水位回调'
+    void setWaterMarkCallback(const HighWaterMarkCallback& cb) 
+    {}
 private:
     // TcpConnection 状态 (tcp connection的状态转移)
     // 初始化状态即为 connecting
@@ -98,8 +115,12 @@ private:
     ConnectionCallback connectionCallback_;
     MessageCallback messageCallback_;
     CloseCallback closeCallback_;
-    /// 数据发送时回调
+    /// 数据发送完毕时回调
     WriteCompleteCallback writeCompleteCallback_;
+    /// 高水位回调: 发送速率 > 对方接收速率，
+    /// 防止数据堆积在本地
+    HighWaterMarkCallback highWaterMarkCallback_;
+    size_t highWaterMark_;      /// 触发高水位回调的阈值
     Buffer inputBuffer_;        /// 接收数据的缓冲区
     Buffer outputBuffer_;       /// 发送数据的缓冲区
 };

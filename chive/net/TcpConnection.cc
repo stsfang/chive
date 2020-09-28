@@ -20,12 +20,19 @@ TcpConnection::TcpConnection(EventLoop* loop,
       socket_ (new Socket(sockfd)),
       channel_ (new Channel(loop, sockfd)),
       localAddr_ (localAddr),
-      peerAddr_ (peerAddr)
+      peerAddr_ (peerAddr),
+      highWaterMark_ (HIGH_WATER_MARK_SIZE)
 
 {
+    CHIVE_LOG_DEBUG("new connection %p created:  { name: %d, sockfd: %d }", this, name_, sockfd);
     channel_->setReadCallback(
         std::bind(&TcpConnection::handleRead, this, _1));
-    CHIVE_LOG_DEBUG("new connection %p created:  { name: %d, sockfd: %d }", this, name_, sockfd);
+    channel_->setWriteCallback(
+        std::bind(&TcpConnection::handleWrite, this));
+    channel_->setCloseCallback(
+        std::bind(&TcpConnection::handleClose, this));
+    channel_->setErrorCallback(
+        std::bind(&TcpConnection::handleError, this));
     socket_->setKeepAlive(true);
 }
 
@@ -195,6 +202,12 @@ void TcpConnection::sendInLoop(const void* data,  size_t len)
     loop_->assertInLoopThread();
     ssize_t nwrote = 0;
     size_t remaining = len;
+    bool faultError = true;
+    // add for give up writing when disconnected.
+    if (state_ == kDisconnected) {
+        CHIVE_LOG_WARN("disconnected, give up writing");
+        return;
+    }
     // 1. 先检查outputBuffer_ 有没有未发送的数据, 如无则直接写
     if (!channel_->isWriting() && outputBuffer_.readableBytes() == 0)
     {
@@ -212,6 +225,9 @@ void TcpConnection::sendInLoop(const void* data,  size_t len)
                 CHIVE_LOG_ERROR("tcpconn %p write to socket %d failed, errno %d",
                             this, channel_->getFd(), errno);
                 /// FIXME: any other error??
+                if (errno == EPIPE || errno == ECONNRESET) {
+                    faultError = true;
+                }
             }
         }
     }
@@ -220,8 +236,17 @@ void TcpConnection::sendInLoop(const void* data,  size_t len)
     // 那么当前数据发送的任务需要排队, 以防数据乱序
     // 解决方案: 开启channel上的写事件
     assert(remaining <= len);
-    if (remaining > 0) 
+    if (remaining > 0 && !faultError) 
     {
+        // 处理高水位回调,防止数据本地堆积
+        size_t oldLen = outputBuffer_.readableBytes();
+        if (oldLen + remaining >= highWaterMark_
+            && oldLen < highWaterMark_
+            && highWaterMarkCallback_)
+        {
+            loop_->queueInLoop(
+                std::bind(highWaterMarkCallback_, shared_from_this(), oldLen + remaining));
+        }
         outputBuffer_.append(static_cast<const char*>(data) + nwrote, remaining);
         if (!channel_->isWriting()) {
             channel_->enableWriting();
@@ -240,3 +265,10 @@ void TcpConnection::shutdownInLoop()
         socket_->shutdownWrite();
     }
 }
+
+void TcpConnection::setKeepAlive(bool on) 
+{ socket_->setKeepAlive(on); }
+
+void TcpConnection::setTcpNoDelay(bool on) 
+{ socket_->setTcpNoDelay(on); }
+
