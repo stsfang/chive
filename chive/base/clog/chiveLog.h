@@ -20,7 +20,7 @@
 #define MAX_PATH_LENGTH 128
 #define MAX_FILE_SIZE (64 * (1 << 20))  // 64M
 
-#define gettid() syscall(__NR_gettid)  
+#define gettid_clog() syscall(__NR_gettid)  
 
 // debug级别
 enum  CDebugLevel {

@@ -1,8 +1,10 @@
 #ifndef CHIVE_NET_TCPSERVER_H
 #define CHIVE_NET_TCPSERVER_H
 
+#define CHIVE_IGNORE_SIGPIPE
 #include "chive/base/noncopyable.h"
 #include "chive/net/TcpConnection.h"
+#include "chive/net/EventLoopThreadPool.h"
 
 #include <map>
 #include <memory>
@@ -22,6 +24,8 @@ class Acceptor;
 class TcpServer : noncopyable 
 {
 public:
+    using ThreadInitCallback = std::function<void(EventLoop*)>;
+    
     TcpServer(EventLoop* loop, InetAddress& listenAddr, const std::string& name, bool reuseport = false);
     ~TcpServer();
 
@@ -30,6 +34,15 @@ public:
      * -- 线程安全
      */
     void start();
+
+    /**
+     * 设置threadpool的线程个数
+     * 必须在start()前调用
+     * @param numThreads 
+     */
+    void setThreadNum(int numThreads);
+    void setThreadInitCallback(const ThreadInitCallback& cb)
+    { threadInitCallback_ = cb; }
 
     // -- 非线程安全 -- 
     void setConnectionCallback(const ConnectionCallback& cb);
@@ -50,6 +63,7 @@ private:
     void newConnection(int sockfd, const InetAddress& peerAddr);
     
     void removeConnection(const TcpConnectionPtr& conn);
+    void removeConnectInLoop(const TcpConnectionPtr& conn);
     
     EventLoop* loop_;       // the acceptor loop
     const std::string name_;                /// the key of ConnectionMap
@@ -57,9 +71,11 @@ private:
     ConnectionCallback connectionCallback_; /// 
     MessageCallback messageCallback_;       /// 
     WriteCompleteCallback writeCompleteCallback_;
+    ThreadInitCallback threadInitCallback_;
     bool started_;                          /// 
     int nextConnId_;                        /// 
     ConnectionMap connections_;             /// 
+    std::unique_ptr<EventLoopThreadPool> threadPool_;
 };
 } // namespace net
 

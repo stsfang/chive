@@ -13,13 +13,16 @@ cc_library(
         'TcpConnection.cc',
         'TcpServer.cc',
         'Buffer.cc',
+        'EventLoopThread.cc',
+        'EventLoopThreadPool.cc',
     ],
     deps = [
    #     '//chive/net/poller/:chive_net_poller'
     ],
     extra_cppflags = [
         '-std=c++14',
-#        '-Wall',
+        # '-Wall',  # show warning as error
+        '-w',       # no warning
          '-g',
     ]
 )

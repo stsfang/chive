@@ -144,7 +144,7 @@ int strToLog(char* strBuffer) {
         snprintf(newStrBuf, MAX_BUFFER_SIZE - 1, "%04d-%02d-%02d %02d:%02d:%02d.%03ld %4d %4ld %s",
                     curTime->tm_year + 1900, curTime->tm_mon+1, curTime->tm_mday, 
                     curTime->tm_hour, curTime->tm_min, curTime->tm_sec, tv.tv_usec / 1000,
-                    getpid(), gettid(),
+                    getpid(), gettid_clog(),
                     strBuffer);
     }
     int len = strlen(newStrBuf);

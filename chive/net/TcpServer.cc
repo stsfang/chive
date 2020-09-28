@@ -66,6 +66,12 @@ void TcpServer::start()
     }
 }
 
+void TcpServer::setThreadNum(int numThreads)
+{
+    assert(0 <= numThreads);
+    threadPool_->setThreadNum(numThreads);
+}
+
 void TcpServer::setConnectionCallback(const ConnectionCallback& cb)
 {
     CHIVE_LOG_DEBUG("set connection callback for tcpserver %p", this);
@@ -110,11 +116,18 @@ void TcpServer::newConnection(int sockfd, const InetAddress& peerAddr)
 
 void TcpServer::removeConnection(const TcpConnectionPtr& conn)
 {
+    loop_->runInLoop(
+        std::bind(&TcpServer::removeConnectInLoop, this, conn));
+}
+// 保证回调在conn的ioloop进行
+void TcpServer::removeConnectInLoop(const TcpConnectionPtr& conn)
+{
     loop_->assertInLoopThread();
     CHIVE_LOG_INFO("remove connection %p named %d", 
                     conn.get(), conn->name().c_str());
     size_t n = connections_.erase(conn->name());
-    assert(n == 1); (void)n;
-    loop_->queueInLoop(
+    assert(n == 1); (void)n;    
+    EventLoop* ioLoop = conn->getLoop();
+    ioLoop->queueInLoop(
         std::bind(&TcpConnection::connectDestroyed, conn));
 }

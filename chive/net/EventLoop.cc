@@ -176,7 +176,7 @@ void EventLoop::cancel(TimerId timerId)
 
 void EventLoop::runInLoop(const Functor& cb)
 {
-    CHIVE_LOG_DEBUG("is loop thread %d",isInLoopThread());
+    //CHIVE_LOG_DEBUG("is loop thread %d",isInLoopThread());
     // 如果是在 IO 线程，那么直接执行 cb
     if(isInLoopThread())
     {

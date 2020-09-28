@@ -1,12 +1,18 @@
 cc_library(
     name = 'chive_base',
     srcs = [
-        'Logger.cc',
         'CurrentThread.cc',
         'CountDownLatch.cc',
+        'Thread.cc',
     ],
     deps = [
         '#pthread',
         '//chive/base/clog/:chive_log'
     ],
+    extra_cppflags = [
+        '-std=c++14',
+        # '-Wall',  # show warning as error
+        '-w',       # no warning
+         '-g',
+    ]
 )

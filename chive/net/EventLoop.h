@@ -51,12 +51,12 @@ public:
         return threadId_ == CurrentThread::tid();
     }
     
-   void updateChannel(Channel* channel);
-   void removeChannel(Channel* channel);
-   
-   bool hasChannel(Channel* channel);
+    void updateChannel(Channel* channel);
+    void removeChannel(Channel* channel);
+    
+    bool hasChannel(Channel* channel);
 
-   void quit();
+    void quit();
 
     /**
      * 在IO线程里执行用户任务回调，用于线程间调配任务
