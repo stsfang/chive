@@ -11,6 +11,11 @@ using namespace chive;
 using namespace chive::net;
 using namespace std::placeholders;        // function对象占位符
 
+#ifdef CHIVE_IGNORE_SIGPIPE
+// 全局对象定义, 忽略SIGPIPE
+IgnoreSigPipe initObj;
+#endif
+
 void defaltConnectionCallback(const TcpConnectionPtr& conn)
 {
     CHIVE_LOG_DEBUG("connection localAddr %s peerAddr %s connected state %s", 

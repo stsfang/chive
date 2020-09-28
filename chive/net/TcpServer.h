@@ -8,6 +8,10 @@
 #include <memory>
 #include <string>
 
+#ifdef CHIVE_IGNORE_SIGPIPE
+#include "chive/net/IgnoreSigPipe.h"    // init global IgnoreSigPipe
+#endif
+
 namespace chive
 {
 namespace net
