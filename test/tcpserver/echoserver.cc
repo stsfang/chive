@@ -18,9 +18,12 @@ void onConnection(const TcpConnectionPtr& conn) {
         CHIVE_LOG_DEBUG("new connection [%s] from %s",
                             conn->name().c_str(),
                             conn->peerAddress().toIpPort().c_str());
-        conn->send(msg1);
+        CHIVE_LOG_DEBUG("sleep....");
+        ::sleep(5);
+
+        // conn->send(msg1);
         conn->send(msg2);
-        // conn->shutdown();
+        conn->shutdown();
     } else {
         CHIVE_LOG_WARN("connecion [%s] is down", conn->name().c_str());
     }
