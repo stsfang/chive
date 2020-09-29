@@ -85,7 +85,6 @@ void* Thread::startThread(void* obj)
 void Thread::runInThread()
 {
     tid_ = Thread::gettid();
-    CHIVE_LOG_DEBUG("latch down...");
     latch_.countDown();
     try
     {

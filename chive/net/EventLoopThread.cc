@@ -28,30 +28,23 @@ EventLoopThread::~EventLoopThread()
 
 EventLoop* EventLoopThread::startLoop()
 {
-    CHIVE_LOG_DEBUG("start loop...");
     assert(!thread_.started());
     thread_.start();    // 创建线程
-
+    EventLoop* loop = NULL;
     {
         MutexLockGuard lock(mutex_);
-        while (loop_ == nullptr)
+        while (loop_ == NULL)
         {
             cond_.wait();
         }
-        /// 临时用sleep规避一下
-        sleep(4);
+        loop = loop_;
     }
-    CHIVE_LOG_DEBUG("return loop %p", loop_);
-    /// FIXME:
-    // 在loop_返回之前必须完成了初始化
-    return loop_;
+    return loop;
 }
 
 void EventLoopThread::threadFunc()
 {
     EventLoop loop; // stack obj
-
-    CHIVE_LOG_DEBUG("loop1 %p", &loop);
     if (callback_)
     {
         callback_(&loop);
