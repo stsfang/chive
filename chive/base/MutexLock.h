@@ -5,7 +5,9 @@
 #include "chive/base/CurrentThread.h"
 
 #include <pthread.h>
-#include <cassert>
+#include <stdio.h>
+#include <assert.h>
+
 
 namespace chive
 {
@@ -15,12 +17,14 @@ namespace chive
 class MutexLock : noncopyable {
 public:
     MutexLock() : mutex_{}, holder_(0) {
-        assert(pthread_mutex_init(&mutex_, nullptr) == 0);
+        int flag = pthread_mutex_init(&mutex_, nullptr);
+        assert(flag == 0); (void)flag;
     }
 
     ~MutexLock() {
         assert(holder_ == 0);
-        assert(pthread_mutex_destroy(&mutex_) == 0);
+        int flag = pthread_mutex_destroy(&mutex_);
+        assert(flag == 0); (void)flag;
     }
 
     /**
@@ -32,17 +36,20 @@ public:
     }
 
     void assertLocked() {
-        assert(isLockedByThisThread());
+        bool flag = isLockedByThisThread();
+        assert(flag); (void)flag;
     }
 
     void lock() {
-        pthread_mutex_lock(&mutex_);
+        int flag = pthread_mutex_lock(&mutex_);
+        assert(flag == 0); (void)flag;
         holder_ = CurrentThread::tid();
     }
 
     void unlock() {
         holder_ = 0;
-        pthread_mutex_unlock(&mutex_);
+        int flag = pthread_mutex_unlock(&mutex_);
+        assert(flag == 0); (void)flag;
     }
 
     pthread_mutex_t* getPthreadMutexPtr() {

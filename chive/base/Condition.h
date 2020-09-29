@@ -12,16 +12,19 @@ namespace chive
 class Condition : noncopyable {
 public:
     explicit Condition(MutexLock& mutex) : mutex_(mutex) {
-        assert(pthread_cond_init(&cond_, nullptr) == 0);
+        int flag = pthread_cond_init(&cond_, nullptr);
+        assert(flag == 0); (void)flag;
     }
 
     ~Condition() {
-        assert(pthread_cond_destroy(&cond_) == 0);
+        int flag = pthread_cond_destroy(&cond_);
+        assert(flag == 0); (void)flag;
     }
 
     void wait() {
         /// FIXME: need lock guard or not?
-        assert(pthread_cond_wait(&cond_, mutex_.getPthreadMutexPtr()) == 0);
+        int flag = pthread_cond_wait(&cond_, mutex_.getPthreadMutexPtr());
+        assert(flag == 0); (void)flag;
     }
 
     bool waitForSecond(int second) {
@@ -36,11 +39,13 @@ public:
     }
 
     void notify() {
-        assert(pthread_cond_signal(&cond_) == 0);
+        int flag = pthread_cond_signal(&cond_);
+        assert(flag == 0); (void)flag;
     }
 
     void notifyall() {
-        assert(pthread_cond_broadcast(&cond_) == 0);
+        int flag = pthread_cond_broadcast(&cond_);
+        assert(flag == 0); (void)flag;
     }
 
 private:

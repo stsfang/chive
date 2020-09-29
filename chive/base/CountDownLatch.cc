@@ -3,7 +3,7 @@
 using namespace chive;
 
 CountDownLatch::CountDownLatch(int count)
-    : mutex_(),
+    : mutex_{},
       condition_(mutex_),
       count_(count) 
 {
