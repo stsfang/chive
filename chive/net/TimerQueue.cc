@@ -105,7 +105,15 @@ TimerQueue::TimerQueue(EventLoop* loop)
 
 TimerQueue::~TimerQueue()
 {
+    CHIVE_LOG_DEBUG("timerqueue %p destructed", this);
+    timerfdChannel_.disableAll();
+    timerfdChannel_.remove();
     ::close(timerfd_);      // 关闭fd
+    for (const auto& timer : timers_)
+    {
+        CHIVE_LOG_DEBUG("remove timer %ld", timer.second->getSequence());
+        // delete timer.second; // RAII
+    }
 }
 
 TimerId TimerQueue::addTimer(const Timer::TimerCallback& cb, Timer::Timestamp when, Timer::TimeType interval) {
@@ -194,13 +202,15 @@ bool TimerQueue::insert(const std::shared_ptr<Timer>& timer)
 }
 
 std::vector<TimerQueue::Entry> TimerQueue::getExpired(Timer::Timestamp now) {
-    std::vector<Entry> expired;
 
+    CHIVE_LOG_DEBUG("get expired timer by now %ld", now);
+    std::vector<Entry> expired;
     Entry sentry = std::make_pair(now, std::shared_ptr<Timer>());
     auto it = timers_.lower_bound(sentry);
 
     assert(it == timers_.end() || now < it->first);
 
+    // 移除过期的非周期定时器
     std::copy(timers_.begin(), it, std::back_inserter(expired));
     timers_.erase(timers_.begin(), it);
 
