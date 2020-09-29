@@ -3,6 +3,9 @@
 #include "chive/base/clog/chiveLog.h"
 
 
+#include <stdio.h>
+// #define NDEBUG
+#include <assert.h>
 
 void runInThread()
 {
@@ -16,14 +19,15 @@ int main()
 
     chive::net::EventLoopThread loopThread;
     chive::net::EventLoop* loop = loopThread.startLoop();
-     CHIVE_LOG_DEBUG("run after...");
-    loop->runAfter(2, runInThread);
+    CHIVE_LOG_DEBUG("main() run after...");
+
     loop->runInLoop(runInThread);
+    loop->runAfter(2000, runInThread);
     // sleep(1);
     
-    sleep(3);
+    sleep(6);
     loop->quit();
 
-    CHIVE_LOG_DEBUG("exit main");
+    CHIVE_LOG_DEBUG("main() exit main...");
     
 }
