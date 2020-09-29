@@ -44,17 +44,22 @@ private:
     using Entry = std::pair<Timer::Timestamp, std::shared_ptr<Timer>>;
     using TimerList = std::set<Entry>;
 
+    // add for cancel() --begin
     using ActiveTimer = std::pair<std::shared_ptr<Timer>, int64_t>;
     using ActiveTimerSet = std::set<ActiveTimer>;
+    // add for cancel() --end
 
     EventLoop* loop_;           //
     const int timerfd_;         // 定时器 fd
     Channel timerfdChannel_;    //定时器timerfd专用channel
     TimerList timers_;          //定时器列表
 
+    // add for cancel() timer --begin
     ActiveTimerSet activeTimers_;
-    ActiveTimerSet cancelingTimers_;
-    bool callingExpiredTimers_;
+    ActiveTimerSet cancelingTimers_;    /// 防止timer"自注销",即在回调中被注销
+    /// FIXME: 使用atomic??
+    bool callingExpiredTimers_;         /// 防止timer"自注销"
+    // add for cancel() timer --end
 
     /**
      * 定时器到期，处理timerfd可读事件
@@ -90,7 +95,7 @@ private:
     void addTimerInLoop(const std::shared_ptr<Timer>& timer);
 
     /**
-     * 在EventLoop中撤销一个定时器
+     * 在EventLoop中撤销一个定时器，由cancel()调用
      * @param tiemrId 标识定时器的<Timer, sequenceId>
      */
     void cancelInLoop(const TimerId& timerId);

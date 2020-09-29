@@ -224,7 +224,7 @@ void TimerQueue::reset(const std::vector<Entry>& expired, Timer::Timestamp now)
     {
         // ActiveTimer: std::pair<std::shared_ptr<Timer>, int64_t>
         ActiveTimer timer(it.second, it.second->getSequence());
-        // 如果timer是周期性触发的，那么需要重新启动
+        // 如果timer是周期性触发的 (且不在cancel)，那么需要重新启动
         if (it.second->repeat()
                 && cancelingTimers_.find(timer) == cancelingTimers_.end())
         {
@@ -252,9 +252,12 @@ void TimerQueue::handleRead()
     Timer::Timestamp now = Timer::now();
     timerfdOps::readTimerfd(timerfd_, now);
     std::vector<Entry> expiredTimers = getExpired(now);
+
+    /// 应对timer在回调函数中被cancel -- begin
     // 标志位，正在处理定时器任务
     callingExpiredTimers_ = true;
     cancelingTimers_.clear();
+    /// 应对timer在回调函数中被cancel -- end
 
     CHIVE_LOG_DEBUG("run %d tasks", expiredTimers.size());
     // 逐个调用定时器上绑定的任务
@@ -262,9 +265,11 @@ void TimerQueue::handleRead()
     {
         timer.second->run();
     }
+    /// 应对timer在回调函数中被cancel -- begin
     callingExpiredTimers_ = false;
-    
+    /// 应对timer在回调函数中被cancel -- end
+
     //处理完定时器任务需要重置
-    ///TODO:
+    ///TODO: canceled的请求不再放到timers_和activeTimers_
     reset(expiredTimers, now);
 }
