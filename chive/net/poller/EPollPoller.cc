@@ -96,7 +96,7 @@ void EPollPoller::updateChannel(Channel* channel)
         }
         else 
         {
-            assert(channels_.find(fd) != channels_end());
+            assert(channels_.find(fd) != channels_.end());
             assert(channels_[fd] == channel); /// ? channel移除了但没有从map移除
         }
         channel->setIndex(kAdded);
@@ -147,12 +147,19 @@ void EPollPoller::removeChannel(Channel* channel)
 
 void EPollPoller::fillActiveChannels(int numEvents, ChannelList* activeChannels) const
 {
-    assert(static_cast<EventList::size_type>(numEvents) == events_.size());
+    CHIVE_LOG_DEBUG("numEvents %d events_size %d", numEvents, events_.size());
+    assert(static_cast<EventList::size_type>(numEvents) <= events_.size());
     for (int i = 0; i < numEvents; ++i)
     {
         // 在EPollPoller::update() 中, 使用 epoll_event.data.ptr保存channel指针
         // 所以这里可以从中取出channel
         auto *channel = static_cast<Channel*>(events_[i].data.ptr);
+#ifndef NDEBUG
+        int fd = channel->getFd();
+        auto it = channels_.find(fd);
+        assert(it != channels_.end());
+        assert(it->second == channel);
+#endif
         channel->setRevents(events_[i].events);     /// 设置channel上到来的事件
         activeChannels->push_back(channel);          /// 填充到activeChannels
     }

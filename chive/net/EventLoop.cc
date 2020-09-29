@@ -76,12 +76,12 @@ EventLoop::~EventLoop()
                         this, threadId_, CurrentThread::tid());
     
     assert(!looping_);
-    t_loopInThisThread = nullptr;
 
     // 移除 eventf并关闭
-    //wakeupChannel_->disableAll();
-    //wakeupChannel_->remove();
+    wakeupChannel_->disableAll();
+    wakeupChannel_->remove();
     ::close(wakeupFd_);
+    t_loopInThisThread = nullptr;
 }
 
 void EventLoop::loop()
@@ -122,7 +122,7 @@ void EventLoop::removeChannel(Channel* channel)
 {
     CHIVE_LOG_DEBUG("inform poller %p to remove channel %p",
                     poller_.get(), channel);
-    assert(channel->ownerLoop() == this);
+    assert(channel->getOwnerLoop() == this);
     assertInLoopThread();
     poller_->removeChannel(channel);
 }

@@ -29,6 +29,7 @@ Channel::~Channel()
 {
     assert(!eventHanding_);         // 正在处理事件 不能析构
     assert(!addedToLoop_);          // 没被添加到loop 不能析构
+    CHIVE_LOG_DEBUG("channel %p with socket fd %d", this, fd_);
     if (loop_->isInLoopThread())
     {
         assert(!loop_->hasChannel(this));
