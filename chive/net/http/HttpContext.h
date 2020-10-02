@@ -5,6 +5,7 @@
 #include "chive/net/http/HttpRequest.h"
 
 
+
 namespace chive
 {
 namespace net
@@ -14,7 +15,7 @@ class Buffer;
 class HttpContext : copyable 
 {
 public:
-    using Timestamp = unit64_t;
+    using Timestamp = uint64_t;
 
     enum class HttpParseState
     {

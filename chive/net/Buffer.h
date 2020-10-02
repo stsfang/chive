@@ -4,6 +4,7 @@
 #include "chive/base/copyable.h"
 #include <vector>
 #include <string>
+#include <cassert>
 
 namespace chive
 {
@@ -52,6 +53,10 @@ public:
     const char* peek() const
     { return begin() + readerIndex_; }
 
+    // for findCRLF()
+    const char* beginWrite() const
+    { return begin() + writerIndex_; }
+
     char* beginWrite() 
     { return begin() + writerIndex_; }
 
@@ -60,6 +65,8 @@ public:
 
     // 将data append 到writerIndex_
     void append(const char* data, size_t len);
+
+    void append(const std::string& msg);
     
     // 增加已写的计数
     void encWritten(size_t len);
@@ -77,6 +84,19 @@ public:
     void retrieve(size_t len);
     void retrieveAll();
 
+    const char* findCRLF() const;
+    void retrieveUntil(const char* end)
+    {
+        assert(peek() <= end);
+        assert(end <= beginWrite());
+        retrieve(end - peek());
+    }
+
+    std::string toString() const 
+    {
+        return std::string(peek(), static_cast<int>(readableBytes()));
+    }
+
 private:
     char* begin() 
     { return &*buffer_.begin(); }
@@ -89,6 +109,8 @@ private:
     std::vector<char> buffer_;      // 可扩容的buf
     size_t readerIndex_;            // 读取的游标
     size_t writerIndex_;            // 写入的游标
+
+    static const char kCRLF[];
 };
 } // namespace net
 

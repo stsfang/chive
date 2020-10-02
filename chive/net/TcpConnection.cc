@@ -160,6 +160,29 @@ void TcpConnection::connectDestroyed()
 }
 
 
+void TcpConnection::send(Buffer* buf)
+{
+    if (state_ == kConnected)
+    {
+        if (loop_->isInLoopThread()) {
+            sendInLoop(buf->peek(), buf->readableBytes());
+            buf->retrieveAll();
+        } else {
+            /// NOTE: 因为sendInLoop有重载，所以需要指出函数指针类型
+            /// ref:https://www.cnblogs.com/and_swordday/p/4643975.html
+            void (TcpConnection::*fp)(const std::string& message) = &TcpConnection::sendInLoop;
+            loop_->runInLoop(
+                std::bind(fp, this, buf->retrieveAllAsString()));
+        }
+    }
+}
+
+///FIXME: need or not?
+void TcpConnection::send(const void* message, size_t len)
+{
+    send(std::string(static_cast<const char*>(message), len));
+}
+
 void TcpConnection::send(const std::string& message)
 {
     if (state_ == kConnected)
@@ -176,10 +199,6 @@ void TcpConnection::send(const std::string& message)
     }
 }
 
-void TcpConnection::send(const void* message, size_t len)
-{
-
-}
 
 void TcpConnection::shutdown()
 {

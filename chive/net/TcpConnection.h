@@ -8,7 +8,7 @@
 
 #include <memory>
 #include <string>
-
+#include <any>      //C++17 any
 namespace chive
 {
     
@@ -52,10 +52,20 @@ public:
     bool isDisConnected() const { return state_ == kDisconnected; }
 
     // -- thread safe
+    void send(Buffer* buf);
     void send(const std::string& message);
     void send(const void* message, size_t len);
     // -- thread safe
     void shutdown();
+
+    void setContext(const std::any& context)
+    { context_ = context; }
+
+    const std::any& getContext() const
+    {return context_; }
+
+    std::any* getMutableContext()
+    { return &context_; }
 
     /**
      *  -- TCP keepalive
@@ -123,6 +133,8 @@ private:
     size_t highWaterMark_;      /// 触发高水位回调的阈值
     Buffer inputBuffer_;        /// 接收数据的缓冲区
     Buffer outputBuffer_;       /// 发送数据的缓冲区
+
+    std::any context_;
 };
 } // namespace net
 

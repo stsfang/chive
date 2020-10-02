@@ -1,11 +1,14 @@
 #include "chive/net/Buffer.h"
+#include "chive/base/clog/chiveLog.h"
 #include <cassert>
 #include <string>
 #include <sys/uio.h>
+#include <algorithm>
 
 using namespace chive;
 using namespace chive::net;
 
+const char Buffer::kCRLF[] = "\r\n";
 
 Buffer::Buffer(size_t initialSize)
     : buffer_ (kCheapPrepend + initialSize),
@@ -13,7 +16,7 @@ Buffer::Buffer(size_t initialSize)
       writerIndex_(kCheapPrepend)
 {
     assert(readableBytes() == 0);
-    assert(writableBytes() == 0);
+    assert(writableBytes() == initialSize);
     assert(prependableBytes() == kCheapPrepend);
 }
 
@@ -61,6 +64,11 @@ void Buffer::append(const char* data, size_t len)
     encWritten(len);    //增加已写入的计数
 }
 
+// for httpResponse
+void Buffer::append(const std::string& msg)
+{
+    append(msg.data(), msg.size());
+}
 // 保证有足够的可写空间
 void Buffer::ensureWritableBytes(size_t len)
 {
@@ -93,7 +101,7 @@ std::string Buffer::retrieveAsString(size_t len)
 
 void Buffer::retrieve(size_t len)
 {
-    assert(len <= readerIndex_);
+    assert(len <= readableBytes());
     if (len <= readableBytes())
     {
         readerIndex_ += len;
@@ -127,4 +135,10 @@ void Buffer::makeSpace(size_t len)
         writerIndex_ = readerIndex_ + readable;
         assert(readable == readableBytes());
     }
+}
+
+const char* Buffer::findCRLF() const
+{
+    const char* crlf = std::search(peek(), beginWrite(), kCRLF, kCRLF+2);
+    return crlf == beginWrite() ? NULL : crlf;
 }

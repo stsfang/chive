@@ -26,7 +26,7 @@ class TcpServer : noncopyable
 public:
     using ThreadInitCallback = std::function<void(EventLoop*)>;
     
-    TcpServer(EventLoop* loop, InetAddress& listenAddr, const std::string& name, bool reuseport = false);
+    TcpServer(EventLoop* loop, const InetAddress& listenAddr, const std::string& name, bool reuseport = false);
     ~TcpServer();
 
     /**
@@ -34,6 +34,10 @@ public:
      * -- 线程安全
      */
     void start();
+
+    const std::string ipPort() const { return ipPort_; }
+    const std::string name() const { return name_; }
+    EventLoop* getLoop() const { return loop_; }
 
     /**
      * 设置threadpool的线程个数
@@ -66,6 +70,7 @@ private:
     void removeConnectInLoop(const TcpConnectionPtr& conn);
     
     EventLoop* loop_;       // the acceptor loop
+    const std::string ipPort_;
     const std::string name_;                /// the key of ConnectionMap
     std::unique_ptr<Acceptor> acceptor_;        /// avoid revealing/exposing acceptor
     ConnectionCallback connectionCallback_; /// 

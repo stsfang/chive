@@ -6,6 +6,8 @@
 #include <map>
 
 /// ref: https://www.cnblogs.com/MandyCheng/p/11151803.html
+/// http报文格式：https://www.cnblogs.com/kageome/p/10859996.html
+
 
 namespace chive
 {
@@ -14,8 +16,9 @@ namespace net
 class HttpRequest : copyable
 {
 public:
-    using Timestamp = uint64_t;
-    using HttpHeader = std::map<std::string, std::string>;
+    using Timestamp     = uint64_t;
+    using HttpHeader    = std::map<std::string, std::string>;
+    using HttpBody      = std::string;
 
     enum class HttpMethod 
     {
@@ -24,7 +27,7 @@ public:
 
     enum class HttpVersion
     {
-        kUnknown, kHttp11, kHttp20
+        kUnknown, kHttp10, kHttp11, kHttp20
     };
 
     HttpRequest();
@@ -72,6 +75,12 @@ public:
     const HttpHeader& getHeaders() const 
     { return headers_; }
 
+    void setBody(const std::string& body)
+    { body_ = std::move(body); }
+
+    const std::string getBody() const 
+    { return body_; }
+
     void swap(HttpRequest& that);
 
     
@@ -82,6 +91,8 @@ private:
     std::string query_;
     Timestamp receiveTime_;
     HttpHeader headers_;
+    HttpBody body_;
+
 };
 
 } // namespace net

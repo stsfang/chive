@@ -20,7 +20,7 @@ cc_library(
    #     '//chive/net/poller/:chive_net_poller'
     ],
     extra_cppflags = [
-        '-std=c++14',
+        '-std=c++17',
         # '-Wall',  # show warning as error
         '-w',       # no warning
          '-g',

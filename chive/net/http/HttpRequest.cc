@@ -4,8 +4,10 @@
 #include <assert.h>
 #include <stdio.h>
 #include <ctype.h>      // isspace()
+#include <string>
+#include <algorithm>
 
-using namespace chvie::net;
+using namespace chive::net;
 
 HttpRequest::HttpRequest()
     : method_ (HttpMethod::INVALID),
@@ -20,26 +22,19 @@ bool HttpRequest::setMethod(const char* start, const char* end)
     std::string _m(start, end);
     /// FIXME:
     /// 检查_m是否完整的http type
-    switch (_m)
-    {
-    case "GET":
+    if ("GET" == _m) {
         method_ = HttpMethod::GET;
-        break;
-    case "POST":
+    } else if ("POST" == _m) {
         method_ = HttpMethod::POST;
-        break;
-    case "PUT":
-        method_ = HTTPMethod::PUT;
-        break;
-    case "HEAD":
+    } else if ("PUT" == _m) {
+        method_ = HttpMethod::PUT;
+    } else if ("HEAD" == _m) {
         method_ = HttpMethod::HEAD;
-        break;
-    case "DELETE":
+    } else if ("DELETE" == _m) {
         method_ = HttpMethod::DELETE;
-        break;
-    default:
+    } else {
+        method_ = HttpMethod::INVALID;
         CHIVE_LOG_ERROR("No such method type!");
-        break;
     }
 }
 
@@ -51,7 +46,7 @@ const char* HttpRequest::methodToString() const
         return "GET";
     case HttpMethod::POST:
         return "POST";
-    case HTTPMethod::PUT:
+    case HttpMethod::PUT:
         return "PUT";
     case HttpMethod::HEAD:
         return "HEAD";
@@ -108,7 +103,7 @@ void HttpRequest::swap(HttpRequest& that)
     path_.swap(that.path_);
     query_.swap(that.query_);
     std::swap(receiveTime_, that.receiveTime_);
-    hreaders_.swap(that.headers_);
+    headers_.swap(that.headers_);
 }
 
 

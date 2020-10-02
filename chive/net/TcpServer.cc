@@ -34,14 +34,16 @@ void defaltMessageCallback(const TcpConnectionPtr& conn, Buffer* buf, Timestamp 
            
 }
 
-TcpServer::TcpServer(EventLoop* loop, InetAddress& listenAddr, const std::string& name, bool reuseport)
+TcpServer::TcpServer(EventLoop* loop, const InetAddress& listenAddr, const std::string& name, bool reuseport)
     : loop_ (loop),
       name_(name),
+      ipPort_(listenAddr.toIpPort()),
       acceptor_ (new Acceptor(loop, listenAddr, reuseport)),
       connectionCallback_(defaltConnectionCallback),
       messageCallback_(defaltMessageCallback),
       started_ (false),
-      nextConnId_(1)
+      nextConnId_(1),
+      threadPool_(new EventLoopThreadPool(loop, "chive_evtloopthreadpool#"+name))
 {
     CHIVE_LOG_DEBUG("created tcpserver %p", this);
     acceptor_->setNewConnectionCallback(
