@@ -4,7 +4,7 @@ cc_library(
         'chiveLog.cc'
     ],
     extra_cppflags = [
-        '-std=c++14',
+        '-std=c++17',
         # '-Wall',  # show warning as error
         '-w',       # no warning
          '-g',

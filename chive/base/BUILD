@@ -10,7 +10,7 @@ cc_library(
         '//chive/base/clog/:chive_log'
     ],
     extra_cppflags = [
-        '-std=c++14',
+        '-std=c++17',
         # '-Wall',  # show warning as error
         '-w',       # no warning
          '-g',
