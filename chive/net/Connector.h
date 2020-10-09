@@ -2,14 +2,16 @@
 #define CHIVE_NET_CONNECTOR_H
 
 #include "chive/base/noncopyable.h"
-#include <functional>
+#include "chive/net/InetAddress.h"
 
-namespace chie
+#include <functional>
+#include <memory>
+
+namespace chive
 {
 namespace net
 {
 class EventLoop;
-class InetAddress;
 
 class Connector : noncopyable
 {
@@ -25,9 +27,42 @@ public:
     void start();
     void restart();
     void stop();
-private:
-    NewConnectionCallback newConnectionCallback_;
 
+    const InetAddress& serverAddress() const 
+    { return serverAddr_; }
+
+private:
+    enum class State
+    {
+        kDisconnected,
+        kConnecting,
+        kConnected,
+    };
+    static const int kMaxRetryDelayMs = 30 * 1000;
+    static const int kInitRetryDelayMs = 500;
+
+    void setState(State s) 
+    { state_ = s; }
+
+    void startInLoop();
+    void stopInLoop();
+    void connect();
+    void connecting(int sockfd);
+    void handleWrite();
+    void handleError();
+    void retry(int sockfd);
+    void resetChannel();
+    int removeAndResetChannel();
+
+    EventLoop* loop_;
+    InetAddress serverAddr_;
+    bool connect_;
+    ///FIXME: use atomic variable?
+    State state_;       
+    std::unique_ptr<Channel> channel_;
+    NewConnectionCallback newConnectionCallback_;
+    int retryDelayMs_;
+    
 };
 } // namespace net
 
