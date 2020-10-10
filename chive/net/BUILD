@@ -15,6 +15,9 @@ cc_library(
         'Buffer.cc',
         'EventLoopThread.cc',
         'EventLoopThreadPool.cc',
+        'SocketOps.cc',
+        'Connector.cc',
+        'TcpClient.cc',
     ],
     deps = [
    #     '//chive/net/poller/:chive_net_poller'

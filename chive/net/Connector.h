@@ -12,8 +12,9 @@ namespace chive
 namespace net
 {
 class EventLoop;
-
-class Connector : noncopyable
+class Channel;
+class Connector : noncopyable,
+                  public std::enable_shared_from_this<Connector>
 {
 public:
     using NewConnectionCallback = std::function<void (int sockfd)>;
@@ -56,7 +57,7 @@ private:
 
     EventLoop* loop_;
     InetAddress serverAddr_;
-    bool connect_;
+    bool connect_;                      /// 是否允许重连
     ///FIXME: use atomic variable?
     State state_;       
     std::unique_ptr<Channel> channel_;
