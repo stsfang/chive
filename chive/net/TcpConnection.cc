@@ -9,6 +9,24 @@ using namespace chive;
 using namespace chive::net;
 using namespace std::placeholders; 
 
+// declaration in Callbacks.h
+void chive::net::defaltConnectionCallback(const TcpConnectionPtr& conn)
+{
+    CHIVE_LOG_DEBUG("connection localAddr %s peerAddr %s connected state %s", 
+                            conn->localAddress().toIpPort().c_str(),
+                            conn->peerAddress().toIpPort().c_str(), 
+                            (conn->isConnected()? "Up" : "Down"));
+}
+
+void chive::net::defaltMessageCallback(const TcpConnectionPtr& conn, Buffer* buf, Timestamp receiveTime)
+{
+    CHIVE_LOG_DEBUG("connection localAddr %s peerAddr %s connected state %s received data %s", 
+                            conn->localAddress().toIpPort().c_str(),
+                            conn->peerAddress().toIpPort().c_str(), 
+                            (conn->isConnected()? "Up" : "Down"),
+                            buf->retrieveAllAsString().c_str());  
+}
+
 TcpConnection::TcpConnection(EventLoop* loop, 
                             const std::string& name, 
                             int sockfd, 
@@ -208,6 +226,25 @@ void TcpConnection::shutdown()
         loop_->runInLoop(
             ///NOTE: 使用shared_from_this() 而不是 this 
             std::bind(&TcpConnection::shutdownInLoop, shared_from_this()));
+    }
+}
+
+void TcpConnection::forceClose()
+{
+    if (state_ == kConnected || state_ == kDisconnecting)
+    {
+        setState(kDisconnecting);
+        loop_->queueInLoop(
+            std::bind(&TcpConnection::forceCloseInLoop, shared_from_this()));
+    }
+}
+
+void TcpConnection::forceCloseInLoop()
+{
+    loop_->assertInLoopThread();
+    if (state_ == kConnected || state_ == kDisconnecting)
+    {
+        handleClose();
     }
 }
 

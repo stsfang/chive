@@ -9,6 +9,7 @@
 #include <memory>
 #include <string>
 #include <any>      //C++17 any
+
 namespace chive
 {
     
@@ -57,6 +58,11 @@ public:
     void send(const void* message, size_t len);
     // -- thread safe
     void shutdown();
+
+    // force closing tcp connection begin on 2020/10/10
+    void forceClose();
+    void forceCloseInLoop();
+    // force closing tcp connection end on 2020/10/10
 
     void setContext(const std::any& context)
     { context_ = context; }
