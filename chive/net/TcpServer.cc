@@ -4,6 +4,7 @@
 #include "chive/net/Acceptor.h"
 #include "chive/net/EventLoop.h"
 
+
 #include <string>
 #include <stdio.h>
 
@@ -16,23 +17,6 @@ using namespace std::placeholders;        // function对象占位符
 IgnoreSigPipe initObj;
 #endif
 
-void defaltConnectionCallback(const TcpConnectionPtr& conn)
-{
-    CHIVE_LOG_DEBUG("connection localAddr %s peerAddr %s connected state %s", 
-                            conn->localAddress().toIpPort().c_str(),
-                            conn->peerAddress().toIpPort().c_str(), 
-                            (conn->isConnected()? "Up" : "Down"));
-}
-
-void defaltMessageCallback(const TcpConnectionPtr& conn, Buffer* buf, Timestamp receiveTime)
-{
-    CHIVE_LOG_DEBUG("connection localAddr %s peerAddr %s connected state %s received data %s", 
-                            conn->localAddress().toIpPort().c_str(),
-                            conn->peerAddress().toIpPort().c_str(), 
-                            (conn->isConnected()? "Up" : "Down"),
-                            buf->retrieveAllAsString().c_str());
-           
-}
 
 TcpServer::TcpServer(EventLoop* loop, const InetAddress& listenAddr, const std::string& name, bool reuseport)
     : loop_ (loop),
