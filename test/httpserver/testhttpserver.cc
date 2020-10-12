@@ -59,7 +59,7 @@ int main()
     int numThreads = 0;
     startLogPrint(nullptr);
     EventLoop loop;
-    HttpServer server(&loop, InetAddress("127.0.0.1", 8000), "dummy");
+    HttpServer server(&loop, InetAddress("10.101.99.222", 8000), "dummy");
     server.setHttpCallback(onRequest);
     server.setThreadNum(numThreads);
     server.start();
