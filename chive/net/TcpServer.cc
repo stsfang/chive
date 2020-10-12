@@ -23,8 +23,8 @@ TcpServer::TcpServer(EventLoop* loop, const InetAddress& listenAddr, const std::
       name_(name),
       ipPort_(listenAddr.toIpPort()),
       acceptor_ (new Acceptor(loop, listenAddr, reuseport)),
-      connectionCallback_(defaltConnectionCallback),
-      messageCallback_(defaltMessageCallback),
+      connectionCallback_(defaultConnectionCallback),
+      messageCallback_(defaultMessageCallback),
       started_ (false),
       nextConnId_(1),
       threadPool_(new EventLoopThreadPool(loop, "chive_evtloopthreadpool#"+name))

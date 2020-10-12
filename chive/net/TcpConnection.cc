@@ -10,7 +10,7 @@ using namespace chive::net;
 using namespace std::placeholders; 
 
 // declaration in Callbacks.h
-void chive::net::defaltConnectionCallback(const TcpConnectionPtr& conn)
+void chive::net::defaultConnectionCallback(const TcpConnectionPtr& conn)
 {
     CHIVE_LOG_DEBUG("connection localAddr %s peerAddr %s connected state %s", 
                             conn->localAddress().toIpPort().c_str(),
@@ -18,7 +18,7 @@ void chive::net::defaltConnectionCallback(const TcpConnectionPtr& conn)
                             (conn->isConnected()? "Up" : "Down"));
 }
 
-void chive::net::defaltMessageCallback(const TcpConnectionPtr& conn, Buffer* buf, Timestamp receiveTime)
+void chive::net::defaultMessageCallback(const TcpConnectionPtr& conn, Buffer* buf, Timestamp receiveTime)
 {
     CHIVE_LOG_DEBUG("connection localAddr %s peerAddr %s connected state %s received data %s", 
                             conn->localAddress().toIpPort().c_str(),
