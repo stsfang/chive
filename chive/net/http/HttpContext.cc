@@ -2,36 +2,10 @@
 #include "chive/base/clog/chiveLog.h"
 #include "chive/net/Buffer.h"
 #include <algorithm>
-
+#include "chive/net/http/HttpBody.h"
 
 using namespace chive;
 using namespace chive::net;
-
-///FIXME: how to parse multipart/form-data
-/// Method POST, PUT, DELETE support body filed (which body content-type should be supported in priority)
-/// Method GET doesn't support body field
-
-/*
-
-content-type: multipart/form-data; boundary=----WebKitFormBoundaryzAq7xCCRBiuAI8E8
-
-Body content ------WebKitFormBoundary9wcq6lyUzDdPCBZc
-Content-Disposition: form-data; name="file"; filename="file_test.txt"
-Content-Type: text/plain
-
-this a test file to chive server.
-------WebKitFormBoundary9wcq6lyUzDdPCBZc
-Content-Disposition: form-data; name="name"
-
-stsfang
-------WebKitFormBoundary9wcq6lyUzDdPCBZc
-Content-Disposition: form-data; name="name2"; filename="blob"
-Content-Type: application/json
-
-hello
-------WebKitFormBoundary9wcq6lyUzDdPCBZc--
-
-*/
 
 HttpContext::HttpContext()
     : state_ (HttpParseState::kExpectRequestLine)
@@ -96,6 +70,14 @@ bool HttpContext::parseRequest(Buffer* buf, Timestamp receiveTime)
         else if (state_ == HttpParseState::kExpectBody)
         {
             std::string b = buf->retrieveAllAsString();
+            std::string contentType = request_.getHeader("content-type");
+            CHIVE_LOG_DEBUG("Header content type %s", contentType.c_str());
+            std::string target("boundary=");
+            auto pos = contentType.find(target);
+            pos += target.size();
+            CHIVE_LOG_DEBUG("body content type %s", contentType.substr(pos).c_str());
+            HttpBody body(b, contentType.substr(pos));
+            body.parse();
             if (!b.empty())
             {
                 request_.setBody(b);

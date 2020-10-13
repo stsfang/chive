@@ -3,8 +3,6 @@
 
 namespace chive
 {
-namespace net
-{
 
 /**
  * 主流的body content type
@@ -35,7 +33,6 @@ enum class MimeType
     TextXml,
     TextHtml,
 };
-} // namespace net
 
 } // namespace chive
 

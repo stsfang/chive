@@ -1,6 +1,7 @@
 cc_library(
     name = 'chive_http',
     srcs = [
+        'HttpBody.cc',
         'HttpRequest.cc',
         'HttpResponse.cc',
         'HttpContext.cc',
