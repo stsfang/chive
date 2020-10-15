@@ -35,7 +35,7 @@ void HttpBody::parse()
             lineChangerPos, finalFilename2.c_str(), boundary_.c_str());
 
     auto fileBegin = fileSegment.find("\r\n\r\n");
-    auto fileEnd = fileSegment.find("--"+boundary_)-1;
+    auto fileEnd = fileSegment.find_last_of("\r\n\r\n") - spliter.size() - 2;
     std::string fileContent = fileSegment.substr(fileBegin+4, fileEnd - fileBegin-4);
     CHIVE_LOG_DEBUG("filebegin %d fileend %d file content %s", fileBegin, fileEnd, fileContent.c_str());
 
@@ -49,7 +49,7 @@ void HttpBody::parse()
     else 
     {
         fout << fileContent;
+        fout.flush();
         fout.close();
     }
-
 }

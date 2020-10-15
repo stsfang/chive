@@ -40,6 +40,7 @@ public:
 
 private:
     bool processRequestLine(const char* begin, const char* end);
+    bool parseRequestBody(Buffer* buf);
     HttpParseState state_;
     HttpRequest request_;
 };
